@@ -262,7 +262,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/18/hello-world/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/16/linearizability_and_serializability/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="firnsan">
@@ -281,7 +281,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/03/18/hello-world/" itemprop="url">Hello World</a></h1>
+                <a class="post-title-link" href="/2018/03/16/linearizability_and_serializability/" itemprop="url">Linearizability 和 Serializability</a></h1>
         
 
         <div class="post-meta">
@@ -293,8 +293,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-18T11:14:24+08:00">
-                2018-03-18
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-16T21:33:00+08:00">
+                2018-03-16
               </time>
             
 
@@ -316,8 +316,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MISC/" itemprop="url" rel="index">
-                    <span itemprop="name">MISC</span>
+                  <a href="/categories/distributed-system/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed system</span>
                   </a>
                 </span>
 
@@ -355,15 +355,59 @@
       
         
           
-            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+            <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>随着信息科技的在人类生活中的不断渗透, 我们数据规模和计算规模也是与日俱增, 某些问题已经无法在单机系统上进行处理, 只能寻求分布式系统的解决方案.</p>
+<p>分布式系统用多个设备来处理特定问题, 但是, 如何保证这样的处理结果像单机系统那样<strong>正确</strong>?<br>这里所谓的<strong>正确</strong>的指的是: 以相同的顺序进行相同的一系列操作, 分布式系统能得到和单机系统相同的结果.</p>
+<p>分布式系统中有个概念叫做Linearizability(线性), 可以用来衡量一个分布式系统的正确程度.  也就是本文主要介绍的内容.  </p>
+<p>本文主要介绍Linearizability概念, 实现Linearizability的意义, 实现Linearizability的难点. 以及简单说明它与Serializability的区别.</p>
+<h1 id="Linearizability的概念"><a href="#Linearizability的概念" class="headerlink" title="Linearizability的概念"></a>Linearizability的概念</h1><p>如果一系列的操作并发交叉进行, 最终形成的history(可以理解为运行记录), 与顺序执行这些操作形成的sequential history相同, 而且这些操作的先后顺序仍然得到保留. 那么这个history我们就称之为是linearizable的[1].</p>
+<p>这个说法是来自论文[1]的正式定义, 理解起来有点烧脑. 但是我有个直白的理解:</p>
+<ul>
+<li>先是简单的情况, 假设操作都可以瞬间生效, 那write操作写入一个值之后,  后续的read操作都应该能读到这个值, 或者读到更加后面的write的值. 而且一个read操作读到某个值后, 它后面的read应该也读到这个值, 或者更加后面的write的值. 这样的一系列操作就是满足linearizable的.</li>
+<li>复杂的情况来了(偏学术), 现实场景中, 一个操作从开始到结束普遍都是有时延的. 比如下文场景一中, 操作1和2的运行时间有一部分重叠, 我们无法区分两者的顺序, 但是可以明确的是: 3在1结束之后开始运行, 而且操作3也在2之后运行. 所以操作3必然能读到操作1的值, 或者读到操作2的值. 这样的话, 这一些列操作就是满足linearizable的.</li>
+</ul>
+<p>现在我列举两个场景, 来形象说明这种偏学术的复杂情况.<br>我们假设现在有一个寄存器, 具有W和R两个操作, 比如W(0)A表示进程A往寄存器写入0这个值, R(0)B表示进程B从寄存器读到0这个值.<br>现实中, 操作从开始到结束是具有时延的, 我们用start[W(0)]表示发起操作, end[W(0)]表示请求结束.</p>
+<h4 id="场景一"><a href="#场景一" class="headerlink" title="场景一"></a>场景一</h4><p>假设现在有如下图所示的场景一:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314451000.png" alt="h1"></p>
+<p>该场景共有三个操作:</p>
+<ol>
+<li>A进程执行W(1).</li>
+<li>操作1进行的过程中, B读取到0这个值, 用R(0)表示.</li>
+<li>操作1和操作2都结束后, B进程再次读取, 得到了1这个值, 用R(1)表示.</li>
+</ol>
+<p>注意这三个操作中隐含的先后顺序: 操作1先于操作3, 操作2先于操作3.</p>
+<p>这个并发执行的场景对应的history如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">start[W(1)]A</span><br><span class="line">start[R(0)]B</span><br><span class="line">end[W(1)]A</span><br><span class="line">end[R(0)]B</span><br><span class="line">start[R(1)]B</span><br><span class="line">end[R(1)]B</span><br></pre></td></tr></table></figure></p>
+<p>这个history可以找到一个等价的sequential history,:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">start[R(0)]B</span><br><span class="line">end[R(0)]B</span><br><span class="line">start[W(1)]A</span><br><span class="line">end[W(1)]A</span><br><span class="line">start[R(1)]B</span><br><span class="line">end[R(1)]B</span><br></pre></td></tr></table></figure></p>
+<p>而且这个sequential history相当于依次执行: 操作2, 操作1, 操作3.<br>这个sequential history仍然保持了操作1—&gt;操作3,  操作2—&gt;操作3的先后顺序. 也即是等价于场景一.<br>因此, 根据论文[1], 场景一可以认为是linearizable的.</p>
+<h4 id="场景二"><a href="#场景二" class="headerlink" title="场景二"></a>场景二</h4><p>再看如下的场景二, 该场景并不满足linearizable的限制 :<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314492000.png" alt="h2"><br>在这个场景中, 当B执行W(1)的同时, A也在读取, 而且已经读取到了1这个值, 也即是有以下关系成立:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt; R(1)A</span><br></pre></td></tr></table></figure></p>
+<p>之后C执行W(0), 也即是:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt;R(1)A---&gt;W(0)C</span><br></pre></td></tr></table></figure></p>
+<p>W(0)C结束之后, B读取这个值, 也就是有以下关系成立:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt;R(1)A---&gt;W(0)C---&gt;R(1)B</span><br></pre></td></tr></table></figure></p>
+<p>从中, 我们发现B竟然还读取到1这个值, 它其实是应该读到0这个值的.<br>所以这个场景是不满足linearizable.</p>
+<h1 id="分布式系统中的Linearizability"><a href="#分布式系统中的Linearizability" class="headerlink" title="分布式系统中的Linearizability"></a>分布式系统中的Linearizability</h1><p>分布式系统中, 如果可以按照操作发生的先后顺序, 构造一个linearizable的运行记录, 那么这个特性就称之为的Linearizability(线性). </p>
+<p>拿zookeeper来举例, 我们应该都知道zookeeper的follower read特性. 如果你从follower上读取数据, 你读到的数据可能是旧的(原因可能是新数据还没apply). 也就是t1时刻更新了zk节点, 在t1之后, 读到的数据可能还是t1之前的. 所以zookeeper是不满足线性的.</p>
+<p>zookeeper不满足线性的原因是follower上的read操作和apply操作没有进行重排, 也就是后面的read操作先于t1那个事务的apply操作.<br>解决这个问题的办法, 可以参考tidb的做法, 将read操作也进行一次raft log, 相当于对read操作的顺序重排到了raftlog中, 排在apply之后.</p>
+<p>不满足线性的另一种原因是, 无法感知/重排这些操作的先后顺序. 举例来说, 假设现在有一个全球部署的分布式存储系统, <strong>先后</strong>发生以下4个操作<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">a. x = 1, 在中国发生</span><br><span class="line">b. read x, 在美国发生</span><br><span class="line">c. x = 2, 在日本发生</span><br><span class="line">d. read x, 在美国发生</span><br></pre></td></tr></table></figure></p>
+<p>按照直觉来想, 操作b读取到的x值肯定是1, 操作d读取到的x值肯定是2.  但这一切都是建立在系统能够感知这些操作的先后顺序之上, 比如在操作b中, 坐落于美国的server可以意识到操作a已经先发生. </p>
+<p>但是在现实的分布式场景中, 我们的系统并不能像上帝一样, 可以清楚的知道世界各角落中, 每个操作的先后顺序, 除非我们为每一个操作都标记上统一的, 单调递增的id, 这个id的功能一般由timestamp来充当. </p>
+<p>但是, 对于Spanner[2][3]这样全球部署, 或者跨地域部署的系统, 如何来为事务分配timestamp, 才能保证系统的响应时间在可接受的范围内? 如果整个系统采用一个中心节点来分配timestamp, 那么系统的响应时间就变得非常不可控, 对于离中心节点隔了半圈地球的用户来说, 响应时间估计会是100ms级别.</p>
+<p>所以, 我有一篇<a href="../spanner">文章</a>着重介绍Spanner分配timestamp的原理, 也即是TrueTime API.</p>
+<h1 id="Linearizability与Serializability"><a href="#Linearizability与Serializability" class="headerlink" title="Linearizability与Serializability"></a>Linearizability与Serializability</h1><p>需要注意的是Linearizability其实是无关于并发控制的, 它只是关于操作顺序的一种限制. 与Linearizability很容易混淆的一个术语是Serializability, 这个特性才是关于并发控制的一个限制. 如果一个系统, 可以将并发的<em>事务</em>按照某种调度, 达到的效果和某种串行执行的效果一样(也就是各事务的操作不会相互交错), 那么这个特性就叫Serializability.</p>
+<p>Serializability着重于保证编程模型中的一些约束, 这些约束大部分是人为规定的. MySQL的默认RR隔离级别是没有保证Serializability, 因为RR并不能防止Lost Update和Write Skew的发生, 这两种情况都会破坏一些约束, 具体请参考Weak Isolation in Relational Databases[4].</p>
+<p>对于单机数据库系统,  单机数据库系统维持一个统一的, 递增的事务id是轻而易举的事情, 所以可以认为它们天生就是具有Linearizability特性. 另外, 有些数据库系统, 比如MySQL, 它所支持的Serializable隔离级别便是本文所说的Serializability的特性.<br>所以, 我们可以看到, 所谓的Serializability便是ACID中的I, 至于Linearizability, 是针对于分布式系统而言的一个难点.</p>
+<h1 id="Linearizability的意义"><a href="#Linearizability的意义" class="headerlink" title="Linearizability的意义"></a>Linearizability的意义</h1><p>现在的数据库系统, 都具有Snapshot read的概念, 所谓Snapshot read指的是对于系统的读操作, 只是过去某一时刻的一个快照, 也就是对应于该事务id所能看到的一份历史数据, 在Spanner的场景来说, 也就一个指定的timestamp所能看到的一份历史数据.</p>
+<p>如果一个分布式系统能够对”历史”有所感知的话, 也就意味着能够感知操作的前后顺序, 也就是说这个系统支持Linearizability.<br>如果一个分布式系统无法支持Linearizability, 那么对于指定一个timestamp所能看到的历史数据, 每次可能是不一样的, 举例来说, 假设现在有一个全球部署的分布式存储系统, <strong>先后</strong>发生以下3个操作:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">a. x = 1, 分配的timestamp为s1</span><br><span class="line">b. 指定timestamp s2执行read x</span><br><span class="line">c. x = 2, 分配的timestamp为s3</span><br><span class="line">d. 指定同一个timestamp s2执行read x</span><br></pre></td></tr></table></figure></p>
+<p>假设s2 &gt; tabs(a),  意思是s2是在操作a之后一个timestamp,  按照直觉来想, 肯定满足s2&gt;s1的关系式, 但是对于不支持Linearizability的系统来说, 可能存在s2 &lt; s1, 导致操作b这个Snapshot read无法看到a操作的结果.</p>
+<p>类似, 还假设s2 &lt; tabs(c), 但是可能存在s2 &gt; s3, 导致操作d这个Snapshot read看到了c操作的结果.</p>
+<p>注意, 操作b和d的都指定同一个timestamp=s2进行Snapshot read,  但是b和d看到的历史数据却是不一样的, 也就是说, 对于同一个timestamp对应的快照竟然不一样.</p>
+<p>到这里可以看出来, 不支持Linearizability的分布式系统, Snapshot read便无从谈起, Snapshot Isolation也就是不可能的事情. </p>
+<blockquote>
+<p>有些系统实现了”部分顺序”, 也就是在单个节点(或者说单个分区)内的Linearizability, 也就是能做到单机Snapshot, 但是没有全局的Snapshot.</p>
+</blockquote>
+<h1 id="实现Linearizability的难点"><a href="#实现Linearizability的难点" class="headerlink" title="实现Linearizability的难点"></a>实现Linearizability的难点</h1><p>从上述描述中, 可以看到, 实现Linearizability首先需要对系统中每个事务分配一个统一的,单调递增的id, 一般来说是timestamp. 那么, 在分布式系统中, 如何协调这个timestamp呢?</p>
+<p>对于这个问题, 我们可能会很迅速的想到一个方案: 引入一个专门生成timestamp的中心节点, 每次事务提交时, 访问该中心节点来获得timestamp. TiDB使用的便是这种方案, 它利用TimeStamp Oracle模块来提供授时服务. 但是这种方案引入了中心节点, 也意味着整套系统的部署不可能在地理位置上过于分散, 否则事务延时将会令人难以忍受.</p>
+<blockquote>
+<p>需要指出的是, 逻辑时钟(比如Lamport时钟和Vector时钟)无法实现Linearizability, 因为它只能区分有”因果关系(也就是有通信)”的事件间的顺序. 所以, 类似于”事务T2在事务T1提交后才开始提交”这样的场景, 当节点间没有发生通信时, 逻辑时钟无法区分这两个事务的顺序.</p>
+</blockquote>
+<p>那么, Spanner是如何在这种全球部署的分布式系统中保证Linearizability的. 在全球分布式系统中,  真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序? 具体详情可以参考这篇文章:<a href="../spanner">关于Spanner中的TrueTime和Linearizability</a></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1]  Linearizability: acorrectness condition for concurrent objects(ACM TOPLAS 1990)<br>[2]  Spanner: Google’s Globally-Distributed Database (OSDI12)<br>[3]  Spanner: Becoming a SQL System (SIGMOD17)<br>[4]  Weak Isolation in Relational Databases, <a href="http://www.evanjones.ca/db-isolation-semantics.html" target="_blank" rel="noopener">http://www.evanjones.ca/db-isolation-semantics.html</a></p>
 
           
         
@@ -593,200 +637,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/16/linearizability_and_serializability/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="firnsan">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="io.Seeker">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/03/16/linearizability_and_serializability/" itemprop="url">Linearizability 和 Serializability</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-16T21:33:00+08:00">
-                2018-03-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/distributed-system/" itemprop="url" rel="index">
-                    <span itemprop="name">distributed system</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>随着信息科技的在人类生活中的不断渗透, 我们数据规模和计算规模也是与日俱增, 某些问题已经无法在单机系统上进行处理, 只能寻求分布式系统的解决方案.</p>
-<p>分布式系统用多个设备来处理特定问题, 但是, 如何保证这样的处理结果像单机系统那样<strong>正确</strong>?<br>这里所谓的<strong>正确</strong>的指的是: 以相同的顺序进行相同的一系列操作, 分布式系统能得到和单机系统相同的结果.</p>
-<p>分布式系统中有个概念叫做Linearizability(线性), 可以用来衡量一个分布式系统的正确程度.  也就是本文主要介绍的内容.  </p>
-<p>本文主要介绍Linearizability概念, 实现Linearizability的意义, 实现Linearizability的难点. 以及简单说明它与Serializability的区别.</p>
-<h1 id="Linearizability的概念"><a href="#Linearizability的概念" class="headerlink" title="Linearizability的概念"></a>Linearizability的概念</h1><p>如果一系列的操作并发交叉进行, 最终形成的history(可以理解为运行记录), 与顺序执行这些操作形成的sequential history相同, 而且这些操作的先后顺序仍然得到保留. 那么这个history我们就称之为是linearizable的[1].</p>
-<p>这个说法是来自论文[1]的正式定义, 理解起来有点烧脑. 但是我有个直白的理解:</p>
-<ul>
-<li>先是简单的情况, 假设操作都可以瞬间生效, 那write操作写入一个值之后,  后续的read操作都应该能读到这个值, 或者读到更加后面的write的值. 而且一个read操作读到某个值后, 它后面的read应该也读到这个值, 或者更加后面的write的值. 这样的一系列操作就是满足linearizable的.</li>
-<li>复杂的情况来了(偏学术), 现实场景中, 一个操作从开始到结束普遍都是有时延的. 比如下文场景一中, 操作1和2的运行时间有一部分重叠, 我们无法区分两者的顺序, 但是可以明确的是: 3在1结束之后开始运行, 而且操作3也在2之后运行. 所以操作3必然能读到操作1的值, 或者读到操作2的值. 这样的话, 这一些列操作就是满足linearizable的.</li>
-</ul>
-<p>现在我列举两个场景, 来形象说明这种偏学术的复杂情况.<br>我们假设现在有一个寄存器, 具有W和R两个操作, 比如W(0)A表示进程A往寄存器写入0这个值, R(0)B表示进程B从寄存器读到0这个值.<br>现实中, 操作从开始到结束是具有时延的, 我们用start[W(0)]表示发起操作, end[W(0)]表示请求结束.</p>
-<h4 id="场景一"><a href="#场景一" class="headerlink" title="场景一"></a>场景一</h4><p>假设现在有如下图所示的场景一:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314451000.png" alt="h1"></p>
-<p>该场景共有三个操作:</p>
-<ol>
-<li>A进程执行W(1).</li>
-<li>操作1进行的过程中, B读取到0这个值, 用R(0)表示.</li>
-<li>操作1和操作2都结束后, B进程再次读取, 得到了1这个值, 用R(1)表示.</li>
-</ol>
-<p>注意这三个操作中隐含的先后顺序: 操作1先于操作3, 操作2先于操作3.</p>
-<p>这个并发执行的场景对应的history如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">start[W(1)]A</span><br><span class="line">start[R(0)]B</span><br><span class="line">end[W(1)]A</span><br><span class="line">end[R(0)]B</span><br><span class="line">start[R(1)]B</span><br><span class="line">end[R(1)]B</span><br></pre></td></tr></table></figure></p>
-<p>这个history可以找到一个等价的sequential history,:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">start[R(0)]B</span><br><span class="line">end[R(0)]B</span><br><span class="line">start[W(1)]A</span><br><span class="line">end[W(1)]A</span><br><span class="line">start[R(1)]B</span><br><span class="line">end[R(1)]B</span><br></pre></td></tr></table></figure></p>
-<p>而且这个sequential history相当于依次执行: 操作2, 操作1, 操作3.<br>这个sequential history仍然保持了操作1—&gt;操作3,  操作2—&gt;操作3的先后顺序. 也即是等价于场景一.<br>因此, 根据论文[1], 场景一可以认为是linearizable的.</p>
-<h4 id="场景二"><a href="#场景二" class="headerlink" title="场景二"></a>场景二</h4><p>再看如下的场景二, 该场景并不满足linearizable的限制 :<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314492000.png" alt="h2"><br>在这个场景中, 当B执行W(1)的同时, A也在读取, 而且已经读取到了1这个值, 也即是有以下关系成立:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt; R(1)A</span><br></pre></td></tr></table></figure></p>
-<p>之后C执行W(0), 也即是:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt;R(1)A---&gt;W(0)C</span><br></pre></td></tr></table></figure></p>
-<p>W(0)C结束之后, B读取这个值, 也就是有以下关系成立:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt;R(1)A---&gt;W(0)C---&gt;R(1)B</span><br></pre></td></tr></table></figure></p>
-<p>从中, 我们发现B竟然还读取到1这个值, 它其实是应该读到0这个值的.<br>所以这个场景是不满足linearizable.</p>
-<h1 id="分布式系统中的Linearizability"><a href="#分布式系统中的Linearizability" class="headerlink" title="分布式系统中的Linearizability"></a>分布式系统中的Linearizability</h1><p>分布式系统中, 如果可以按照操作发生的先后顺序, 构造一个linearizable的运行记录, 那么这个特性就称之为的Linearizability(线性). </p>
-<p>拿zookeeper来举例, 我们应该都知道zookeeper的follower read特性. 如果你从follower上读取数据, 你读到的数据可能是旧的(原因可能是新数据还没apply). 也就是t1时刻更新了zk节点, 在t1之后, 读到的数据可能还是t1之前的. 所以zookeeper是不满足线性的.</p>
-<p>zookeeper不满足线性的原因是follower上的read操作和apply操作没有进行重排, 也就是后面的read操作先于t1那个事务的apply操作.<br>解决这个问题的办法, 可以参考tidb的做法, 将read操作也进行一次raft log, 相当于对read操作的顺序重排到了raftlog中, 排在apply之后.</p>
-<p>不满足线性的另一种原因是, 无法感知/重排这些操作的先后顺序. 举例来说, 假设现在有一个全球部署的分布式存储系统, <strong>先后</strong>发生以下4个操作<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">a. x = 1, 在中国发生</span><br><span class="line">b. read x, 在美国发生</span><br><span class="line">c. x = 2, 在日本发生</span><br><span class="line">d. read x, 在美国发生</span><br></pre></td></tr></table></figure></p>
-<p>按照直觉来想, 操作b读取到的x值肯定是1, 操作d读取到的x值肯定是2.  但这一切都是建立在系统能够感知这些操作的先后顺序之上, 比如在操作b中, 坐落于美国的server可以意识到操作a已经先发生. </p>
-<p>但是在现实的分布式场景中, 我们的系统并不能像上帝一样, 可以清楚的知道世界各角落中, 每个操作的先后顺序, 除非我们为每一个操作都标记上统一的, 单调递增的id, 这个id的功能一般由timestamp来充当. </p>
-<p>但是, 对于Spanner[2][3]这样全球部署, 或者跨地域部署的系统, 如何来为事务分配timestamp, 才能保证系统的响应时间在可接受的范围内? 如果整个系统采用一个中心节点来分配timestamp, 那么系统的响应时间就变得非常不可控, 对于离中心节点隔了半圈地球的用户来说, 响应时间估计会是100ms级别.</p>
-<p>所以, 我有一篇<a href="../spanner">文章</a>着重介绍Spanner分配timestamp的原理, 也即是TrueTime API.</p>
-<h1 id="Linearizability与Serializability"><a href="#Linearizability与Serializability" class="headerlink" title="Linearizability与Serializability"></a>Linearizability与Serializability</h1><p>需要注意的是Linearizability其实是无关于并发控制的, 它只是关于操作顺序的一种限制. 与Linearizability很容易混淆的一个术语是Serializability, 这个特性才是关于并发控制的一个限制. 如果一个系统, 可以将并发的<em>事务</em>按照某种调度, 达到的效果和某种串行执行的效果一样(也就是各事务的操作不会相互交错), 那么这个特性就叫Serializability.</p>
-<p>Serializability着重于保证编程模型中的一些约束, 这些约束大部分是人为规定的. MySQL的默认RR隔离级别是没有保证Serializability, 因为RR并不能防止Lost Update和Write Skew的发生, 这两种情况都会破坏一些约束, 具体请参考Weak Isolation in Relational Databases[4].</p>
-<p>对于单机数据库系统,  单机数据库系统维持一个统一的, 递增的事务id是轻而易举的事情, 所以可以认为它们天生就是具有Linearizability特性. 另外, 有些数据库系统, 比如MySQL, 它所支持的Serializable隔离级别便是本文所说的Serializability的特性.<br>所以, 我们可以看到, 所谓的Serializability便是ACID中的I, 至于Linearizability, 是针对于分布式系统而言的一个难点.</p>
-<h1 id="Linearizability的意义"><a href="#Linearizability的意义" class="headerlink" title="Linearizability的意义"></a>Linearizability的意义</h1><p>现在的数据库系统, 都具有Snapshot read的概念, 所谓Snapshot read指的是对于系统的读操作, 只是过去某一时刻的一个快照, 也就是对应于该事务id所能看到的一份历史数据, 在Spanner的场景来说, 也就一个指定的timestamp所能看到的一份历史数据.</p>
-<p>如果一个分布式系统能够对”历史”有所感知的话, 也就意味着能够感知操作的前后顺序, 也就是说这个系统支持Linearizability.<br>如果一个分布式系统无法支持Linearizability, 那么对于指定一个timestamp所能看到的历史数据, 每次可能是不一样的, 举例来说, 假设现在有一个全球部署的分布式存储系统, <strong>先后</strong>发生以下3个操作:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">a. x = 1, 分配的timestamp为s1</span><br><span class="line">b. 指定timestamp s2执行read x</span><br><span class="line">c. x = 2, 分配的timestamp为s3</span><br><span class="line">d. 指定同一个timestamp s2执行read x</span><br></pre></td></tr></table></figure></p>
-<p>假设s2 &gt; tabs(a),  意思是s2是在操作a之后一个timestamp,  按照直觉来想, 肯定满足s2&gt;s1的关系式, 但是对于不支持Linearizability的系统来说, 可能存在s2 &lt; s1, 导致操作b这个Snapshot read无法看到a操作的结果.</p>
-<p>类似, 还假设s2 &lt; tabs(c), 但是可能存在s2 &gt; s3, 导致操作d这个Snapshot read看到了c操作的结果.</p>
-<p>注意, 操作b和d的都指定同一个timestamp=s2进行Snapshot read,  但是b和d看到的历史数据却是不一样的, 也就是说, 对于同一个timestamp对应的快照竟然不一样.</p>
-<p>到这里可以看出来, 不支持Linearizability的分布式系统, Snapshot read便无从谈起, Snapshot Isolation也就是不可能的事情. </p>
-<blockquote>
-<p>有些系统实现了”部分顺序”, 也就是在单个节点(或者说单个分区)内的Linearizability, 也就是能做到单机Snapshot, 但是没有全局的Snapshot.</p>
-</blockquote>
-<h1 id="实现Linearizability的难点"><a href="#实现Linearizability的难点" class="headerlink" title="实现Linearizability的难点"></a>实现Linearizability的难点</h1><p>从上述描述中, 可以看到, 实现Linearizability首先需要对系统中每个事务分配一个统一的,单调递增的id, 一般来说是timestamp. 那么, 在分布式系统中, 如何协调这个timestamp呢?</p>
-<p>对于这个问题, 我们可能会很迅速的想到一个方案: 引入一个专门生成timestamp的中心节点, 每次事务提交时, 访问该中心节点来获得timestamp. TiDB使用的便是这种方案, 它利用TimeStamp Oracle模块来提供授时服务. 但是这种方案引入了中心节点, 也意味着整套系统的部署不可能在地理位置上过于分散, 否则事务延时将会令人难以忍受.</p>
-<blockquote>
-<p>需要指出的是, 逻辑时钟(比如Lamport时钟和Vector时钟)无法实现Linearizability, 因为它只能区分有”因果关系(也就是有通信)”的事件间的顺序. 所以, 类似于”事务T2在事务T1提交后才开始提交”这样的场景, 当节点间没有发生通信时, 逻辑时钟无法区分这两个事务的顺序.</p>
-</blockquote>
-<p>那么, Spanner是如何在这种全球部署的分布式系统中保证Linearizability的. 在全球分布式系统中,  真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序? 具体详情可以参考这篇文章:<a href="../spanner">关于Spanner中的TrueTime和Linearizability</a></p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1]  Linearizability: acorrectness condition for concurrent objects(ACM TOPLAS 1990)<br>[2]  Spanner: Google’s Globally-Distributed Database (OSDI12)<br>[3]  Spanner: Becoming a SQL System (SIGMOD17)<br>[4]  Weak Isolation in Relational Databases, <a href="http://www.evanjones.ca/db-isolation-semantics.html" target="_blank" rel="noopener">http://www.evanjones.ca/db-isolation-semantics.html</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/15/gtid-and-failover/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -957,6 +807,156 @@
 <li><a href="http://dev.mysql.com/doc/refman/5.7/en/replication-gtids-failover.html" target="_blank" rel="noopener">replication-gtids-failover</a></li>
 <li><a href="http://svenmysql.blogspot.com/2013/03/flexible-fail-over-policies-using-mysql.html" target="_blank" rel="noopener">flexible-fail-over-policies-using-mysql</a></li>
 </ol>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/15/hello-world/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/15/hello-world/" itemprop="url">Hello World</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-15T19:10:00+08:00">
+                2018-03-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MISC/" itemprop="url" rel="index">
+                    <span itemprop="name">MISC</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
 
           
         
