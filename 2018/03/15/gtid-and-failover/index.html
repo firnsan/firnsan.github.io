@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="replication,MySQL,gtid," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言这篇关于GTID的文章是我在15年写下的学习笔记, 当时所在的云数据库团队需要新上MySQL 5.6-GTID的实例, 并且需要升级数据库管控系统的功能. 主要是将MySQL的failover和switchover流程从以往的文件位点(file&amp;amp;pos)的方式升级到GTID的方式.  当时调研的过程中便写下了这个笔记. 如今已经是18年,  我又萌生了写博的想法(大学的时候有写, 工作">
+<meta name="keywords" content="replication,MySQL,gtid">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL GTID介绍, 以及GTID在failover中的使用">
+<meta property="og:url" content="http://yoursite.com/2018/03/15/gtid-and-failover/index.html">
+<meta property="og:site_name" content="io.Seeker">
+<meta property="og:description" content="前言这篇关于GTID的文章是我在15年写下的学习笔记, 当时所在的云数据库团队需要新上MySQL 5.6-GTID的实例, 并且需要升级数据库管控系统的功能. 主要是将MySQL的failover和switchover流程从以往的文件位点(file&amp;amp;pos)的方式升级到GTID的方式.  当时调研的过程中便写下了这个笔记. 如今已经是18年,  我又萌生了写博的想法(大学的时候有写, 工作">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/1fa378b0-2e20-46a4-a106-ef716daf3040.jpg">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/a1631460-7a3a-44c1-a7d8-a03c95a4a5e8.jpg">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/2a46fe22-b46c-450c-8f13-c6d691b65c91.jpg">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/ce92f4c3-8388-4977-8a9a-3773ca00b0d3.jpg">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/7fb9edf3-cdb9-440c-a90f-87cfe3dcbec4.jpg">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/a9c26049-2968-4d23-a9c0-821153effd1e.jpg">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/ec75c19b-6624-4eaa-9101-60bc1f568b4c.jpg">
+<meta property="og:updated_time" content="2018-03-18T03:14:24.701Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL GTID介绍, 以及GTID在failover中的使用">
+<meta name="twitter:description" content="前言这篇关于GTID的文章是我在15年写下的学习笔记, 当时所在的云数据库团队需要新上MySQL 5.6-GTID的实例, 并且需要升级数据库管控系统的功能. 主要是将MySQL的failover和switchover流程从以往的文件位点(file&amp;amp;pos)的方式升级到GTID的方式.  当时调研的过程中便写下了这个笔记. 如今已经是18年,  我又萌生了写博的想法(大学的时候有写, 工作">
+<meta name="twitter:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/1fa378b0-2e20-46a4-a106-ef716daf3040.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/03/15/gtid-and-failover/"/>
+
+
+
+
+
+  <title>MySQL GTID介绍, 以及GTID在failover中的使用 | io.Seeker</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">io.Seeker</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/15/gtid-and-failover/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">MySQL GTID介绍, 以及GTID在failover中的使用</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-15T19:34:14+08:00">
+                2018-03-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这篇关于GTID的文章是我在15年写下的学习笔记, 当时所在的云数据库团队需要新上MySQL 5.6-GTID的实例, 并且需要升级数据库管控系统的功能. 主要是将MySQL的failover和switchover流程从以往的文件位点(file&amp;pos)的方式升级到GTID的方式.  当时调研的过程中便写下了这个笔记. 如今已经是18年,  我又萌生了写博的想法(大学的时候有写, 工作之后就完全荒废了), 所以重新整理发到博客上, </p>
+<p>对于一主多从的MySQL复制拓扑来说, 使用file&amp;pos的同步方式对failover的过程来说是非常不友好的, 因为当复制拓扑中的Master宕机并新选出某个Slave作为New Master后, 其他Slave如何与New Master建立主从关系是个比较头痛的问题, 主要是因为其他Slave需要找到一个合适的位点来连接New Master, 这是一个很费力的过程: 扫描Slave各自的relaylog并找到在New Master上对应的位点.</p>
+<p>但是, 如果使用了GTID, 一切都变得简单了.</p>
+<h2 id="GTID介绍"><a href="#GTID介绍" class="headerlink" title="GTID介绍"></a>GTID介绍</h2><h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h3><p> GTID (global transaction identifier)是已提交事务的唯一表示, 不单在它产生的originating server是唯一的, 在复制拓扑中的所有server范围内都是唯一的, 该特性当gtid_mode=ON时才生效.</p>
+<p>GTID的格式:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source_id:transaction_id</span><br></pre></td></tr></table></figure></p>
+<p>其中:</p>
+<ul>
+<li>source_id就是产生该事务所在server的server_uuid,</li>
+<li>transaction_id与事务提交顺序有关, 取值从1开始, 之后在同一个originating server的提交的事务, 它的transaction_id逐一递增.</li>
+</ul>
+<p>比如,在 UUID为 3e11fa47-71ca-11e1-9e33-c80aa9429562 的server上提交的第58个事务的 GTID是:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3e11fa47-71ca-11e1-9e33-c80aa9429562:58</span><br></pre></td></tr></table></figure>
+<h3 id="GTID-Set"><a href="#GTID-Set" class="headerlink" title="GTID Set"></a>GTID Set</h3><p>若干系统函数, 系统变量的输出形式是GTID set.<br>GTID set的形式如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">uuid:interval [, uuid:interval]</span><br></pre></td></tr></table></figure></p>
+<p>其中interval是1或者1-5这样的区间.</p>
+<p>比如GTID_SUBTRACT(set, subset)这个函数, 返回值是一个new set, 其中newset = set - subset. 像下面的例子:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select GTID_SUBTRACT(&apos;f76eb90f-82a2-11e5-a162-7ca23e9126c5:1-5,f76eb90f-82a2-11e5-a162-7ca23e9126c5:10-15&apos;, &apos;f76eb90f-82a2-11e5-a162-7ca23e9126c5:1-2&apos;)</span><br></pre></td></tr></table></figure></p>
+<p>返回结果:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">f76eb90f-82a2-11e5-a162-7ca23e9126c5:3-5:10-15</span><br></pre></td></tr></table></figure></p>
+<h3 id="GTID生命周期"><a href="#GTID生命周期" class="headerlink" title="GTID生命周期"></a>GTID生命周期</h3><p>我们可以在binlog里看到GTID, 并通过GTID分辨出事务来自哪个server. 另外, 如果事务已经在某个server上提交了,  后续的具有相同GTID的事务将会被忽略. 这样提供了一致性保证.</p>
+<p>使用GTID后, slave不再需要master的上的文件名和偏移量(file&amp;pos), 也即是 CHANGE MASTER TO语句不再需要指定MASTER_LOG_FILE 和 MASTER_LOG_POS参数.  </p>
+<ol>
+<li>事务在master上提交时, 被赋予一个GTID, GTID会立即写到binlog中,在事务本身的前面:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/1fa378b0-2e20-46a4-a106-ef716daf3040.jpg" alt="alt"></li>
+<li>binlog数据传输到slave上并存到relay log后, slave将读取GTID, 并设置到gtid_next这个变量里, 之后slave上提交的事务必须使用这个GTID. 也就是说, slave对这个事务不产生新的GTID. </li>
+<li>slave确认这个GTID没有被自己的binlog使用后, 开始执行事务. 事务提交时会将GTID写到binlog,  并将事务的其他event写到binlog中.  </li>
+</ol>
+<h3 id="系统变量GTID-NEXT"><a href="#系统变量GTID-NEXT" class="headerlink" title="系统变量GTID_NEXT"></a>系统变量GTID_NEXT</h3><p>gtid_next是session变量, 默认值是AUTOMATIC, 表示生成新GTID.<br>slave线程从relaylog读取到GTID后, 会设置gtid_nex参数. 比如, 从relaylog读取到了4d8b564f-03f4-4975-856a-0e65c3105328:4711这个GTID, 它会执行下面这个语句:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET GTID_NEXT = 4d8b564f-03f4-4975-856a-0e65c3105328:4711;</span><br></pre></td></tr></table></figure></p>
+<p>mysqlbinlog也使用这样的机制, 当它读取到一个gitd-event, 便输出一个SET GTID_NEXT 语句.</p>
+<p>当一个事务提交时, innodb会检查它是会否已经存在于系统变量GTID_EXECUTED中, 如果存在的话, 这个事务将会被忽略.</p>
+<h3 id="系统变量GTID-EXECUTED"><a href="#系统变量GTID-EXECUTED" class="headerlink" title="系统变量GTID_EXECUTED"></a>系统变量GTID_EXECUTED</h3><p>变量GTID_EXECUTED中, 存有所有写到binlog中的所有gitd set, 它的值和SHOW MASTER STATUS 或者SHOW SLAVE STATUS中的<code>Executed_Gtid_Set</code>字段是一样的.<br>比如server上应用了下事务:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:1</span><br><span class="line">0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:2</span><br><span class="line">4D8B564F-03F4-4975-856A-0E65C3105328:1</span><br><span class="line">0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:3</span><br><span class="line">4D8B564F-03F4-4975-856A-0E65C3105328:2</span><br></pre></td></tr></table></figure></p>
+<p>那么, GTID_EXECUTED的值就是:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:1-3,</span><br><span class="line">4D8B564F-03F4-4975-856A-0E65C3105328:1-2&quot;</span><br></pre></td></tr></table></figure></p>
+<p>对于slave, 如果io线程收到到数据, 存放在relaylog中,  可以通过show slave status查看Retrieved_Gtid_Set字段, 了解slave已经收到的事务.</p>
+<h3 id="复制协议"><a href="#复制协议" class="headerlink" title="复制协议"></a>复制协议</h3><p>在5.6之前的主从复制, 当slave连接master时, 需要指定master的binlog位点(file&amp;pos), 然后master发送这个点之后的所有数据.</p>
+<p>现在新的协议是: </p>
+<ol>
+<li>当slave连接master时, 发送它已经执行过的事务gitd区间.</li>
+<li>master发送其他的事务给slave, 也就是slave还没有执行的事务.</li>
+</ol>
+<p><img src="http://blog-10049763.cos.myqcloud.com/wiznote/a1631460-7a3a-44c1-a7d8-a03c95a4a5e8.jpg" alt="alt"></p>
+<h3 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h3><ul>
+<li><code>GTID_SUBSET()</code>Return true if all GTIDs in subset are also in set; otherwise false.</li>
+<li><code>GTID_SUBTRACT()</code>Return all GTIDs in set that are not in subset.</li>
+<li><code>WAIT_FOR_EXECUTED_GTID_SET()</code>    Wait until the given GTIDs have executed on slave.</li>
+<li><code>WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS()</code> Wait until the given GTIDs have executed on slave.</li>
+</ul>
+<h3 id="搭建主从"><a href="#搭建主从" class="headerlink" title="搭建主从"></a>搭建主从</h3><p>master上一定要开启binlog, 以及配置serverid<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">log-bin=mysql-bin</span><br><span class="line">server-id=1</span><br></pre></td></tr></table></figure></p>
+<p>启动master, 注意打开gtid_mode:<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqld_safe --gtid_mode=ON --<span class="built_in">log</span>-bin --<span class="built_in">log</span>-slave-updates --enforce-gtid-consistency&amp;</span><br></pre></td></tr></table></figure></p>
+<p>启动slave, 注意加上skip-slave-start 选项:<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqld_safe --gtid_mode=ON --<span class="built_in">log</span>-bin --<span class="built_in">log</span>-slave-updates --enforce-gtid-consistency --skip-slave-start</span><br></pre></td></tr></table></figure></p>
+<p>在slave执行:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CHANGE MASTER TO  MASTER_HOST = host, MASTER_PORT = port, MASTER_USER = user, MASTER_PASSWORD = password, MASTER_AUTO_POSITION = 1;</span><br><span class="line">START SLAVE;</span><br></pre></td></tr></table></figure>
+<p> 这样简单的一主一从就搭建好了.</p>
+<p>具体操作:<br><a href="http://dev.mysql.com/doc/refman/5.6/en/replication-gtids-howto.html" target="_blank" rel="noopener">http://dev.mysql.com/doc/refman/5.6/en/replication-gtids-howto.html</a></p>
+<h2 id="GTID在failover中的使用"><a href="#GTID在failover中的使用" class="headerlink" title="GTID在failover中的使用"></a>GTID在failover中的使用</h2><h3 id="场景1-newest-slave当作new-master"><a href="#场景1-newest-slave当作new-master" class="headerlink" title="场景1: newest slave当作new master"></a>场景1: newest slave当作new master</h3><p>考虑下图的一主两从星型结构, A当作master, B,C都是它的slave:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/2a46fe22-b46c-450c-8f13-c6d691b65c91.jpg" alt="alt"></p>
+<p>假设现在A宕机了, 我们需要做切换操作, 从B和C中找一个server来当作新的master, 并把其他的server当作它的slave:</p>
+<p><img src="http://blog-10049763.cos.myqcloud.com/wiznote/ce92f4c3-8388-4977-8a9a-3773ca00b0d3.jpg" alt="alt"></p>
+<p>由于主从复制是异步的, B和C从原来的master中收到的、应用的事务个数都不一样, 可能其中一个数据比较新. 假设B的数据比C要新, 我们将B当作新的master. 那么我们需要将C当作B的slave, 并从C还没应用的事务开始主从复制.<br>假设A提交了3个事务,  B复制了这3个事务,  但是C只复制了第一个事务:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/7fb9edf3-cdb9-440c-a90f-87cfe3dcbec4.jpg" alt="alt"></p>
+<p>当A宕机后, 我们用B当作新的master, 把C当作B的slave. 在新的 replication协议下, C将会发送id1给B, 之后B将会把C没有执行的事务, 也就是(id2,tr2) , (id3, tr3) 发送给C, 之后在B上新提交的事务, 也会源源不断的发送给C.</p>
+<h3 id="场景2-任意指定某-slave当作new-master"><a href="#场景2-任意指定某-slave当作new-master" class="headerlink" title="场景2: 任意指定某 slave当作new master"></a>场景2: 任意指定某 slave当作new master</h3><p>有些时候, newest slave并不是理想的 new master, 可能是它的硬件配置不高, 网络不好. 我们一开始就预先选定了某硬件很强劲的slave当作备选master.</p>
+<p>在下图中, 一开始A是master, BCD都是slave. 而且我们指定B当作备选master:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/a9c26049-2968-4d23-a9c0-821153effd1e.jpg" alt="alt"></p>
+<p>假设这时候A宕机了, 这个时候需要作切换, 因为D现在是newest, 就简单的做法就是将D当作新的master, 让其他server当作slave. 但是我们现在要把B当作新的master, 在此之前, 我们要更新B的数据, 做法是让B当作D的slave, 当B追上D时, 再切换B为master.</p>
+<p>但是上图仅仅是现实情况的简化版, 真实情况是,  slave可能已经将数据写到relaylog 但是还没有应用这些事务, 如下图:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/ec75c19b-6624-4eaa-9101-60bc1f568b4c.jpg" alt="alt"></p>
+<p>这个情景中, BCD分别收到了1, 2, 3个事务, 但是B一个事务都还没应用, C应用了2个, D应用了1个.</p>
+<p>我们的目标是把B当作新的master, 再这之前需要更新他的数据. </p>
+<p>第一种做法是, 让B依次连接C和D, 连接后, 等待B执行完C或者D中relaylog和binlog中的事务. 这样一轮下来, B的数据已经是newest, 已经可以切换成为新的master. </p>
+<p>第二种方法, 是找到most slave, 也就是relay log数据最多的slave, 在这个例子中是D, 等待D的sql线程执行完relay log后, 再让B连接D, 等B的数据达到newest后, 切换成为新的master. </p>
+<p>前面说过, slave收到的事务可以在SHOW SLAVE STATUS中的Retrieved_GTID_Set看到,  已经应用的事务可以在变量gtid_executed看到.</p>
+<p>上述第一种做法的操作, 可以下面的伪代码实现, 其中candidate是备选master:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">for each slave in slaves_of_the_master:</span><br><span class="line">    if slave != candidate:</span><br><span class="line">      candidate.query(STOP SLAVE)</span><br><span class="line">      candidate.query(CHANGE MASTER TO</span><br><span class="line">                        MASTER_HOST = slave.host,</span><br><span class="line">                        MASTER_PORT = slave.port)</span><br><span class="line">      candidate.query(START SLAVE)</span><br><span class="line">      slave_executed_gtids :=</span><br><span class="line">          slave.query(SELECT @@GLOBAL.GTID_EXECUTED)</span><br><span class="line">      slave_queued_gtids :=</span><br><span class="line">          slave.query(SHOW SLAVE STATUS)</span><br><span class="line">                     [column = Retrieved_GTID_Set]</span><br><span class="line">      slave_all_gtids :=</span><br><span class="line">          slave_executed_gtids + &apos;,&apos; + slave_queued_gtids</span><br><span class="line">      candidate.query(</span><br><span class="line">          SELECT WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS(</span><br><span class="line">            slave_all_gtids))</span><br></pre></td></tr></table></figure>
+<p>云数据库行业内failover的实现方式稍微更复杂一些, 因为我们需要在RPO和RTO之间做平衡, 首要是保证RPO(也就是尽量保证不丢数据), 但是也要兼顾RTO(不能因为failover中由于额外某些slave的故障导致failover时间太长)</p>
+<h2 id="使用GTID的一些限制"><a href="#使用GTID的一些限制" class="headerlink" title="使用GTID的一些限制"></a>使用GTID的一些限制</h2><p>因为GTID是基于事务的, 当使用GTID时, 一些mysql的特性将会收到限制.</p>
+<ul>
+<li>更新涉及到非事务引擎: 当在一个trx中, 既更新基于事务引擎的表, 又更新了非事务引擎的表, 这种情况会导致这个trx产生多个GTID. 这就破坏了GTID和事务之间一对一的关系, 进而导致基于GTID的主从复制不能正确工作. 其实现在已经很少人这么用, 我们团队5.6数据库已经默认把用户的MyISAM转换成Innodb.</li>
+<li>CREATE TABLE … SELECT语句: 当使用row-based格式的binlog, 这个语句会产生两个独立的event: 一个新建table, 另外一个插入数据. 如果在trx中执行该语句, 这两个event可能会产生相同的GTID, 也就意味着插入数据的那个evnet会被跳过. 其实令一条SQL语句产生两个GTID即可避免这个问题,  对于这一点,  我提了个patch给官方:<a href="https://bugs.mysql.com/bug.php?id=82919" target="_blank" rel="noopener">#82919</a> .</li>
+<li>临时表: 当使用GTID时, 不支持CREATE TEMPORARY TABLE和 DROP TEMPORARY TABLE 这两个语句, 但是如果在事务外, 而且autocommit=1时, 可以执行这两个语句. 也即是事务内才会有问题, 事务外是ok的.</li>
+</ul>
+<p>通过–enforce-gtid-consistency选项, 可以阻止上述语句的执行. 开启该选项后, 相关的语句执行会导致错误.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">create table test2 select * from  test1;</span><br><span class="line">ERROR 1786 (HY000): CREATE TABLE ... SELECT is forbidden when @@GLOBAL.ENFORCE_GTID_CONSISTENCY = 1.</span><br></pre></td></tr></table></figure></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="http://dev.mysql.com/doc/refman/5.7/en/replication-gtids-failover.html" target="_blank" rel="noopener">replication-gtids-failover</a></li>
+<li><a href="http://svenmysql.blogspot.com/2013/03/flexible-fail-over-policies-using-mysql.html" target="_blank" rel="noopener">flexible-fail-over-policies-using-mysql</a></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/replication/" rel="tag"># replication</a>
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+            <a href="/tags/gtid/" rel="tag"># gtid</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/03/16/linearizability_and_serializability/" rel="prev" title="Linearizability 和 Serializability">
+                Linearizability 和 Serializability <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4"
+                alt="firnsan" />
+            
+              <p class="site-author-name" itemprop="name">firnsan</p>
+              <p class="site-description motion-element" itemprop="description">Seeker on distributed storage systems</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GTID介绍"><span class="nav-number">2.</span> <span class="nav-text">GTID介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概念"><span class="nav-number">2.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GTID-Set"><span class="nav-number">2.2.</span> <span class="nav-text">GTID Set</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GTID生命周期"><span class="nav-number">2.3.</span> <span class="nav-text">GTID生命周期</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#系统变量GTID-NEXT"><span class="nav-number">2.4.</span> <span class="nav-text">系统变量GTID_NEXT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#系统变量GTID-EXECUTED"><span class="nav-number">2.5.</span> <span class="nav-text">系统变量GTID_EXECUTED</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#复制协议"><span class="nav-number">2.6.</span> <span class="nav-text">复制协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#相关函数"><span class="nav-number">2.7.</span> <span class="nav-text">相关函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#搭建主从"><span class="nav-number">2.8.</span> <span class="nav-text">搭建主从</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GTID在failover中的使用"><span class="nav-number">3.</span> <span class="nav-text">GTID在failover中的使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#场景1-newest-slave当作new-master"><span class="nav-number">3.1.</span> <span class="nav-text">场景1: newest slave当作new master</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景2-任意指定某-slave当作new-master"><span class="nav-number">3.2.</span> <span class="nav-text">场景2: 任意指定某 slave当作new master</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用GTID的一些限制"><span class="nav-number">4.</span> <span class="nav-text">使用GTID的一些限制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">firnsan</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

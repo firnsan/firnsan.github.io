@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="distributed,Spanner," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言本文着重讲解Spanner是如何在这种全球部署的分布式系统中, 如实反映事务commit的先后顺序. 具体来说, 真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序?也即是, Spanner是如何在这种全球部署的分布式系统中保证Linearizability[1][2]的? 首先我们先了解下Spanner的特性和它的整体架构. Spanner简介Sp">
+<meta name="keywords" content="distributed,Spanner">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于Spanner中的TrueTime和Linearizability">
+<meta property="og:url" content="http://yoursite.com/2018/03/16/spanner/index.html">
+<meta property="og:site_name" content="io.Seeker">
+<meta property="og:description" content="前言本文着重讲解Spanner是如何在这种全球部署的分布式系统中, 如实反映事务commit的先后顺序. 具体来说, 真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序?也即是, Spanner是如何在这种全球部署的分布式系统中保证Linearizability[1][2]的? 首先我们先了解下Spanner的特性和它的整体架构. Spanner简介Sp">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314557000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314579000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314607000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314633000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314697000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314728000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314758000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314786000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314828000.png">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314863000.png">
+<meta property="og:updated_time" content="2018-03-18T03:14:24.701Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="关于Spanner中的TrueTime和Linearizability">
+<meta name="twitter:description" content="前言本文着重讲解Spanner是如何在这种全球部署的分布式系统中, 如实反映事务commit的先后顺序. 具体来说, 真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序?也即是, Spanner是如何在这种全球部署的分布式系统中保证Linearizability[1][2]的? 首先我们先了解下Spanner的特性和它的整体架构. Spanner简介Sp">
+<meta name="twitter:image" content="http://blog-10049763.cos.myqcloud.com/images/1497314557000.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/03/16/spanner/"/>
+
+
+
+
+
+  <title>关于Spanner中的TrueTime和Linearizability | io.Seeker</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">io.Seeker</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/16/spanner/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">关于Spanner中的TrueTime和Linearizability</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-16T21:33:00+08:00">
+                2018-03-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed-system/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed system</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>本文着重讲解Spanner是如何在这种全球部署的分布式系统中, 如实反映事务commit的先后顺序. 具体来说, 真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序?<br>也即是, Spanner是如何在这种全球部署的分布式系统中保证Linearizability[1][2]的?</p>
+<p>首先我们先了解下Spanner的特性和它的整体架构.</p>
+<h1 id="Spanner简介"><a href="#Spanner简介" class="headerlink" title="Spanner简介"></a>Spanner简介</h1><p>Spanner是由Google公司设计开发的一套可扩展的, 高可用的, 可全球部署的分布式数据库系统. 具有如下特性:</p>
+<ol>
+<li>提供了基于SQL的查询接口, 使用强类型的schema, 提供了类型RDS的体验.</li>
+<li>一定程度上支持垂直sharding, 用户可以通过INTERLEAVE语法定义相关的两个table的记录存放在同一个spanserver. 带来的好处是形成了数据的Locality, 对于查询中的一些操作(比如join, group by)可以进行下推[3].</li>
+<li>可以自动对数据进行水平sharding, 并对每个shard维护一定的数量的副本, 通过Multi-Paxos保证一致性, 这些副本可以分散在全球不同地域.</li>
+<li>支持Snapshot Isolation, 通过2PL保证多个并发事务的Serializability. 另外, 对于涉及多个shard的xa事务, 通过2PC保证Serializability.</li>
+<li>保证External Consistency(等价于Linearizability, 下文不再区分), 也就是说如果事务T1提交后, 事务T2才开始提交, 那么T2的timestamp一定大于T1的timestamp. </li>
+</ol>
+<h1 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h1><p> Spanner是由一系列的zone组成, zone是Spanner中的部署的单元, 一般会在某datacenter部署一个zone, 但是也可以有多个zone. 数据副本就是存放在这一系列的zone中, zone之间的物理距离越大, 数据的安全性越高.<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314557000.png" alt="spanner整体架构"><br>universemaster: 是一个控制台, 监控universe里所有zone状态信息, 用于debug<br>placement driver: 帮助维持特定副本数量，自动搬迁数据,  实现负载均衡<br>zonemaster: 管理spanserver上的数据<br>location proxy: 作用不详, 可能是为client提供数据的位置信息, client要先访问它来定位需要访问的spanserver<br>spanserver: 对client提供服务, 包括读写数据</p>
+<h1 id="Spanserver架构"><a href="#Spanserver架构" class="headerlink" title="Spanserver架构"></a>Spanserver架构</h1><p><img src="http://blog-10049763.cos.myqcloud.com/images/1497314579000.png" alt="spanserver架构"><br>每个spanserver负责管理100~1000个tablet.<br>一个tablet是维护某个表的一部分数据, 比如一个表有10000行数据, 分成100个tablet, 那么第1个tablet维护第1~100行数据, 第2个tablet维护第101~200行数据.<br>tablet维护的数据是一系列的KV:<code>(key,timestamp) ---&gt; value</code><br>可以看出, Spanner的KV数据是和timestamp绑定的, 所以自然就是支持multi-version.</p>
+<p>为了支持数据复制, spanserver在每个tablet上层实现了paxos group, 这个group中replica分布在不同的zone中.<br>每个leader replica还维护了一个lock table, 也就是一系列的KV: <code>key---&gt;lock-states</code>.<br>lock-states指的是对应的数据在2PL过程中的锁状态.</p>
+<p>spanserver在每个leader replica上都实现了transaction manager, 这个模块是用来支持分布式事务的.<br>如果事务涉及到多个paxos group, 那么每个leader replica此时就是participant leader的身份, 其中一个 participant group会被client选作coordinator, 通过2PC的方式来实现Serializability.<br>如果事务只涉及一个paxos group, 那么transaction manager的功能可以被忽略, 只依赖lock table就可以实现Serializability.</p>
+<h1 id="事务commit的过程"><a href="#事务commit的过程" class="headerlink" title="事务commit的过程"></a>事务commit的过程</h1><h3 id="简单的实现-但是有问题"><a href="#简单的实现-但是有问题" class="headerlink" title="简单的实现(但是有问题)"></a>简单的实现(但是有问题)</h3><p>现在假设让我们来实现事务的commit过程, 有一种简单的方法如下图所示, 这种方法简单的从local clock分配timestamp给事务:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314607000.png" alt="简单的实现"></p>
+<p>假设现在有先后两个事务T1和T2, 分别在不同的spanserver上执行, T2在T1提交后, 才开始提交, 使用这个方法会导致真实世界中后提交的trx反而具有较小的timestamp. 这个问题出现的原因是, 两个事务所使用的local clock没有可比性, 无法真实反映两个trx的先后顺序:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314633000.png" alt="顺序相反"></p>
+<p>上图表明, T2的timestamp是8, T1的timestamp是10, 这个和真实世界的先后顺序是相反的, 原因在于不同设备上的clock是没有可比性.<br>为了解决这个问题, 我们可能会很迅速的想到一个解决方案: 引入一个专门生成timestamp的中心节点, 每次事务提交时, 访问该中心节点来获得timestamp. TiDB使用的便是这种方案. 但是这种方案引入了中心节点, 也意味着整套系统的部署不可能在地理位置上过于分散, 否则事务延时将会令人难以忍受.</p>
+<p>Spanner采用了另外一种方案:TrueTime. TrueTime不但可以分配统一的具有可比性timestamp范围, 还支持系统的全球范围部署.</p>
+<h3 id="TrueTime"><a href="#TrueTime" class="headerlink" title="TrueTime"></a>TrueTime</h3><p>Spanner的TrueTime是利用GPS时钟和原子钟实现的, 可以提供非常精确的时钟, 误差在1ms~7ms之间.<br>TT.now()返回一个区间[earlist, latest], 保证abs time(绝对时间)是在区间以内.<br>TT.after(t)判断一个时间是否已经成为过去时, 是对TT.now()的简单封装:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">return TT.now().earlist &gt; t</span><br></pre></td></tr></table></figure></p>
+<p>TT.before(t)和前者类似,判断时间是否是未来时. </p>
+<h4 id="TrueTime实现"><a href="#TrueTime实现" class="headerlink" title="TrueTime实现"></a>TrueTime实现</h4><p>TrueTime是通过以下架构实现的:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314697000.png" alt="TrueTime架构"><br>每个datacenter具有若干个time master, 另外每台设备上运行有timeslave进程. 前者是Spanner的时钟来源, 大部分是配备GPS接收器,剩下一小部分配备原子钟(防止GPS的天线故障或者频率干扰, 所以也叫”末日时钟”).<br>timeslave以30s的间隔从time master同步时间. 当timeslave需要校准local clock时, 从就近的datacenter和较远的datacenter的time master拉取时间信息, 并通过Marzullo算法[4]识别并丢弃异常的时间来源, 并将多个时间信息归并到一个统一的时间. </p>
+<p>TrueTime API的直接数据来源是设备上的local clock. 所以TrueTime的误差来源有:</p>
+<ol>
+<li>从time master同步时的网络延迟, 导致的误差大概是1ms.</li>
+<li>local clock的漂移, 这个误差是时间的锯齿函数, 校准后的一瞬间是0, 校准前的一瞬间是最大值, 范围在0~6ms.</li>
+</ol>
+<p>所以TrueTime总的误差是1~7ms, OSID12论文表示平均是4ms左右.</p>
+<p>网络延迟导致的误差如下图所示:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314728000.png" alt="网络延迟"></p>
+<p>local clock漂移导致的误差, 是因为环境温度,工作电压等因素导致的. Spanner计算这个误差时, 已经按照最坏的漂移速度(200us/s)来计算的, 真实的差距可能是local clock提前了, 或者是local clock电压不够导致落后了. </p>
+<p>为了保证 local clock的漂移在0~6ms之内, 也就是漂移频率在200us/s之内, Spanner实现了漂移频率异常的设备从集群中剔除的功能.</p>
+<h3 id="Commit-Wait"><a href="#Commit-Wait" class="headerlink" title="Commit Wait"></a>Commit Wait</h3><p>利用TrueTime, Spanner可以保证整个分布式系统中,所有事务分配到的timestamp都是具有可比性的, 基于同一个参考系的.</p>
+<p>Spanner在TureTime的基础上,还引入一个Commit Wait的限制,  保证了<code>External Consistency</code>, 也就是保证了如下规律:<br>如果事务T2在事务T1提交后, 才开始提交, 那么T2的commit timestamp肯定大于T1的commit timestamp.</p>
+<p>这个限制是一个很关键的地方是, Commit Wait:<br>等待T1的timestamp <em>s</em>成为过去时, 才提交事务(也就是通知其他replica进行重放,回复ack给用户), 也就是保证事务commit的绝对时间大于<em>s</em>, 有了Commit Wait之后就可以保证了External Consistency, 证明如下:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314758000.png" alt="证明"></p>
+<p>因此, Spanner的read-write事务提交时的步骤如下:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314786000.png" alt="读写事务"></p>
+<p>首先, replica leader接受收到client的commit request后, 会锁住相应的key, 然后分配TT.now().latest作为事务的timestamp <em>s</em>.<br>因为TT.now()保证了abs time是在区间内的, 所以这个<em>s</em>是未来时, 需要进行Commit Wait, 等待<em>s</em>成为过去时后, 再进行提交, 用于保证External Consistentency.<br>假设s = t1 + ε1, 进行Commit Wait之后是Now() = t2±ε2.<br>由于t2-ε2 &gt;= t1+ε1, 所以Commit Wait所消耗的时间等于t2-t1&gt;= ε1+ ε2, 也就是等待时间至少是平均误差的2倍, 约8ms(OSDI12的论文中表示Commit Wait的时间大多数情况和Paxos write的时间是重叠的).</p>
+<p>关于External Consistency的示例如下, 假设图中事务T1所在的spanserver的误差是1, 事务T2所在的spanserver误差是2:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314828000.png" alt="读写事务举例"><br>Spanner保证了T1的timestamp=11 小于 T2的timestamp=14.<br>注意图中纵坐标不是随意标注的, 而是注入了一定的限制在这里: 刻度11 &gt;= T1的timestamp, 而且 T2的timestamp &gt;= 13.  </p>
+<p>Spanner巧妙的通过Truetime和Commit Wait, 保证了T1的timestamp &lt; T2的timestamp.</p>
+<h1 id="Snapshot-read"><a href="#Snapshot-read" class="headerlink" title="Snapshot read"></a>Snapshot read</h1><p>Snapshot read指的是读取过去时间的某个快照, 无需加锁.<br>client可以指定一个timestamp  t, 或者时间范围,Spanner会寻找一个数据充分更新好的replica来提供读服务.<br>所谓数据充分更新好, 是指t &lt;= tsafe. 其中tsafe定义如下:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314863000.png" alt="tsafe"><br>前者指的已经提交的事务tiemstamp, 后者指的是正在2PC过程中未决的事务timestamp-1.<br>如果t&gt;tsafe , Spanner需要等待replica一段时间, 待tsafe推进后再进行读操作.<br>基于External Consistency特性,  Spanner可以感知操作的先后顺序, 给定一个时间戳t, Spanner能够明确哪些是历史数据, 并提供一致的快照. </p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>Spanner的TureTime API设计非常巧妙, 保证了绝对时间一定是落在TT.now()返回的区间之中. 基于这个保证, 使得分布在全球的spanserver分配的timestamp都是基于同一参考系, 具有可比性. 进而让Spanner能够感知分布式系统中的事件的先后顺序, 保证了External Consistency.<br>但是TureTime API要求对误差的测量具有非常高的要求, 如果实际误差 &gt; 预计的误差, 那么绝对时间很可能就飘到了区间之外, 后续的操作都无法保证宣称的External Consistency.另外, Spanener的大部分响应时间与误差的大小是正相关的.<br>自Spanner在OSDI12发表论文后, Spanner一直在努力减少误差, 并提高测量误差的技术[3], 但是并没有透露更多细节.   </p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1]  Linearizability: acorrectness condition for concurrent objects(ACM TOPLAS 1990)<br>[2]  <a href="../linearizability_and_serializability">Linearizability 和 Serializability</a><br>[3]  Spanner: Becoming a SQL System (SIGMOD17)<br>[4]  Marzullo’s algorithm, <a href="https://en.wikipedia.org/wiki/Marzullo%27s_algorithm" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Marzullo%27s_algorithm</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/distributed/" rel="tag"># distributed</a>
+          
+            <a href="/tags/Spanner/" rel="tag"># Spanner</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/16/linearizability_and_serializability/" rel="next" title="Linearizability 和 Serializability">
+                <i class="fa fa-chevron-left"></i> Linearizability 和 Serializability
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/03/18/hello-world/" rel="prev" title="Hello World">
+                Hello World <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4"
+                alt="firnsan" />
+            
+              <p class="site-author-name" itemprop="name">firnsan</p>
+              <p class="site-description motion-element" itemprop="description">Seeker on distributed storage systems</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Spanner简介"><span class="nav-number">2.</span> <span class="nav-text">Spanner简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#整体架构"><span class="nav-number">3.</span> <span class="nav-text">整体架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Spanserver架构"><span class="nav-number">4.</span> <span class="nav-text">Spanserver架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#事务commit的过程"><span class="nav-number">5.</span> <span class="nav-text">事务commit的过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简单的实现-但是有问题"><span class="nav-number">5.0.1.</span> <span class="nav-text">简单的实现(但是有问题)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TrueTime"><span class="nav-number">5.0.2.</span> <span class="nav-text">TrueTime</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TrueTime实现"><span class="nav-number">5.0.2.1.</span> <span class="nav-text">TrueTime实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Commit-Wait"><span class="nav-number">5.0.3.</span> <span class="nav-text">Commit Wait</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Snapshot-read"><span class="nav-number">6.</span> <span class="nav-text">Snapshot read</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">firnsan</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

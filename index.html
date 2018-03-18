@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Seeker on distributed storage systems">
+<meta property="og:type" content="website">
+<meta property="og:title" content="io.Seeker">
+<meta property="og:url" content="http://yoursite.com/index.html">
+<meta property="og:site_name" content="io.Seeker">
+<meta property="og:description" content="Seeker on distributed storage systems">
+<meta property="og:locale" content="en">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="io.Seeker">
+<meta name="twitter:description" content="Seeker on distributed storage systems">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/"/>
+
+
+
+
+
+  <title>io.Seeker</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left 
+  page-home">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">io.Seeker</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+  <section id="posts" class="posts-expand">
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/18/hello-world/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/18/hello-world/" itemprop="url">Hello World</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-18T11:14:24+08:00">
+                2018-03-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MISC/" itemprop="url" rel="index">
+                    <span itemprop="name">MISC</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/16/spanner/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/16/spanner/" itemprop="url">关于Spanner中的TrueTime和Linearizability</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-16T21:33:00+08:00">
+                2018-03-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed-system/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed system</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>本文着重讲解Spanner是如何在这种全球部署的分布式系统中, 如实反映事务commit的先后顺序. 具体来说, 真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序?<br>也即是, Spanner是如何在这种全球部署的分布式系统中保证Linearizability[1][2]的?</p>
+<p>首先我们先了解下Spanner的特性和它的整体架构.</p>
+<h1 id="Spanner简介"><a href="#Spanner简介" class="headerlink" title="Spanner简介"></a>Spanner简介</h1><p>Spanner是由Google公司设计开发的一套可扩展的, 高可用的, 可全球部署的分布式数据库系统. 具有如下特性:</p>
+<ol>
+<li>提供了基于SQL的查询接口, 使用强类型的schema, 提供了类型RDS的体验.</li>
+<li>一定程度上支持垂直sharding, 用户可以通过INTERLEAVE语法定义相关的两个table的记录存放在同一个spanserver. 带来的好处是形成了数据的Locality, 对于查询中的一些操作(比如join, group by)可以进行下推[3].</li>
+<li>可以自动对数据进行水平sharding, 并对每个shard维护一定的数量的副本, 通过Multi-Paxos保证一致性, 这些副本可以分散在全球不同地域.</li>
+<li>支持Snapshot Isolation, 通过2PL保证多个并发事务的Serializability. 另外, 对于涉及多个shard的xa事务, 通过2PC保证Serializability.</li>
+<li>保证External Consistency(等价于Linearizability, 下文不再区分), 也就是说如果事务T1提交后, 事务T2才开始提交, 那么T2的timestamp一定大于T1的timestamp. </li>
+</ol>
+<h1 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h1><p> Spanner是由一系列的zone组成, zone是Spanner中的部署的单元, 一般会在某datacenter部署一个zone, 但是也可以有多个zone. 数据副本就是存放在这一系列的zone中, zone之间的物理距离越大, 数据的安全性越高.<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314557000.png" alt="spanner整体架构"><br>universemaster: 是一个控制台, 监控universe里所有zone状态信息, 用于debug<br>placement driver: 帮助维持特定副本数量，自动搬迁数据,  实现负载均衡<br>zonemaster: 管理spanserver上的数据<br>location proxy: 作用不详, 可能是为client提供数据的位置信息, client要先访问它来定位需要访问的spanserver<br>spanserver: 对client提供服务, 包括读写数据</p>
+<h1 id="Spanserver架构"><a href="#Spanserver架构" class="headerlink" title="Spanserver架构"></a>Spanserver架构</h1><p><img src="http://blog-10049763.cos.myqcloud.com/images/1497314579000.png" alt="spanserver架构"><br>每个spanserver负责管理100~1000个tablet.<br>一个tablet是维护某个表的一部分数据, 比如一个表有10000行数据, 分成100个tablet, 那么第1个tablet维护第1~100行数据, 第2个tablet维护第101~200行数据.<br>tablet维护的数据是一系列的KV:<code>(key,timestamp) ---&gt; value</code><br>可以看出, Spanner的KV数据是和timestamp绑定的, 所以自然就是支持multi-version.</p>
+<p>为了支持数据复制, spanserver在每个tablet上层实现了paxos group, 这个group中replica分布在不同的zone中.<br>每个leader replica还维护了一个lock table, 也就是一系列的KV: <code>key---&gt;lock-states</code>.<br>lock-states指的是对应的数据在2PL过程中的锁状态.</p>
+<p>spanserver在每个leader replica上都实现了transaction manager, 这个模块是用来支持分布式事务的.<br>如果事务涉及到多个paxos group, 那么每个leader replica此时就是participant leader的身份, 其中一个 participant group会被client选作coordinator, 通过2PC的方式来实现Serializability.<br>如果事务只涉及一个paxos group, 那么transaction manager的功能可以被忽略, 只依赖lock table就可以实现Serializability.</p>
+<h1 id="事务commit的过程"><a href="#事务commit的过程" class="headerlink" title="事务commit的过程"></a>事务commit的过程</h1><h3 id="简单的实现-但是有问题"><a href="#简单的实现-但是有问题" class="headerlink" title="简单的实现(但是有问题)"></a>简单的实现(但是有问题)</h3><p>现在假设让我们来实现事务的commit过程, 有一种简单的方法如下图所示, 这种方法简单的从local clock分配timestamp给事务:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314607000.png" alt="简单的实现"></p>
+<p>假设现在有先后两个事务T1和T2, 分别在不同的spanserver上执行, T2在T1提交后, 才开始提交, 使用这个方法会导致真实世界中后提交的trx反而具有较小的timestamp. 这个问题出现的原因是, 两个事务所使用的local clock没有可比性, 无法真实反映两个trx的先后顺序:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314633000.png" alt="顺序相反"></p>
+<p>上图表明, T2的timestamp是8, T1的timestamp是10, 这个和真实世界的先后顺序是相反的, 原因在于不同设备上的clock是没有可比性.<br>为了解决这个问题, 我们可能会很迅速的想到一个解决方案: 引入一个专门生成timestamp的中心节点, 每次事务提交时, 访问该中心节点来获得timestamp. TiDB使用的便是这种方案. 但是这种方案引入了中心节点, 也意味着整套系统的部署不可能在地理位置上过于分散, 否则事务延时将会令人难以忍受.</p>
+<p>Spanner采用了另外一种方案:TrueTime. TrueTime不但可以分配统一的具有可比性timestamp范围, 还支持系统的全球范围部署.</p>
+<h3 id="TrueTime"><a href="#TrueTime" class="headerlink" title="TrueTime"></a>TrueTime</h3><p>Spanner的TrueTime是利用GPS时钟和原子钟实现的, 可以提供非常精确的时钟, 误差在1ms~7ms之间.<br>TT.now()返回一个区间[earlist, latest], 保证abs time(绝对时间)是在区间以内.<br>TT.after(t)判断一个时间是否已经成为过去时, 是对TT.now()的简单封装:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">return TT.now().earlist &gt; t</span><br></pre></td></tr></table></figure></p>
+<p>TT.before(t)和前者类似,判断时间是否是未来时. </p>
+<h4 id="TrueTime实现"><a href="#TrueTime实现" class="headerlink" title="TrueTime实现"></a>TrueTime实现</h4><p>TrueTime是通过以下架构实现的:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314697000.png" alt="TrueTime架构"><br>每个datacenter具有若干个time master, 另外每台设备上运行有timeslave进程. 前者是Spanner的时钟来源, 大部分是配备GPS接收器,剩下一小部分配备原子钟(防止GPS的天线故障或者频率干扰, 所以也叫”末日时钟”).<br>timeslave以30s的间隔从time master同步时间. 当timeslave需要校准local clock时, 从就近的datacenter和较远的datacenter的time master拉取时间信息, 并通过Marzullo算法[4]识别并丢弃异常的时间来源, 并将多个时间信息归并到一个统一的时间. </p>
+<p>TrueTime API的直接数据来源是设备上的local clock. 所以TrueTime的误差来源有:</p>
+<ol>
+<li>从time master同步时的网络延迟, 导致的误差大概是1ms.</li>
+<li>local clock的漂移, 这个误差是时间的锯齿函数, 校准后的一瞬间是0, 校准前的一瞬间是最大值, 范围在0~6ms.</li>
+</ol>
+<p>所以TrueTime总的误差是1~7ms, OSID12论文表示平均是4ms左右.</p>
+<p>网络延迟导致的误差如下图所示:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314728000.png" alt="网络延迟"></p>
+<p>local clock漂移导致的误差, 是因为环境温度,工作电压等因素导致的. Spanner计算这个误差时, 已经按照最坏的漂移速度(200us/s)来计算的, 真实的差距可能是local clock提前了, 或者是local clock电压不够导致落后了. </p>
+<p>为了保证 local clock的漂移在0~6ms之内, 也就是漂移频率在200us/s之内, Spanner实现了漂移频率异常的设备从集群中剔除的功能.</p>
+<h3 id="Commit-Wait"><a href="#Commit-Wait" class="headerlink" title="Commit Wait"></a>Commit Wait</h3><p>利用TrueTime, Spanner可以保证整个分布式系统中,所有事务分配到的timestamp都是具有可比性的, 基于同一个参考系的.</p>
+<p>Spanner在TureTime的基础上,还引入一个Commit Wait的限制,  保证了<code>External Consistency</code>, 也就是保证了如下规律:<br>如果事务T2在事务T1提交后, 才开始提交, 那么T2的commit timestamp肯定大于T1的commit timestamp.</p>
+<p>这个限制是一个很关键的地方是, Commit Wait:<br>等待T1的timestamp <em>s</em>成为过去时, 才提交事务(也就是通知其他replica进行重放,回复ack给用户), 也就是保证事务commit的绝对时间大于<em>s</em>, 有了Commit Wait之后就可以保证了External Consistency, 证明如下:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314758000.png" alt="证明"></p>
+<p>因此, Spanner的read-write事务提交时的步骤如下:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314786000.png" alt="读写事务"></p>
+<p>首先, replica leader接受收到client的commit request后, 会锁住相应的key, 然后分配TT.now().latest作为事务的timestamp <em>s</em>.<br>因为TT.now()保证了abs time是在区间内的, 所以这个<em>s</em>是未来时, 需要进行Commit Wait, 等待<em>s</em>成为过去时后, 再进行提交, 用于保证External Consistentency.<br>假设s = t1 + ε1, 进行Commit Wait之后是Now() = t2±ε2.<br>由于t2-ε2 &gt;= t1+ε1, 所以Commit Wait所消耗的时间等于t2-t1&gt;= ε1+ ε2, 也就是等待时间至少是平均误差的2倍, 约8ms(OSDI12的论文中表示Commit Wait的时间大多数情况和Paxos write的时间是重叠的).</p>
+<p>关于External Consistency的示例如下, 假设图中事务T1所在的spanserver的误差是1, 事务T2所在的spanserver误差是2:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314828000.png" alt="读写事务举例"><br>Spanner保证了T1的timestamp=11 小于 T2的timestamp=14.<br>注意图中纵坐标不是随意标注的, 而是注入了一定的限制在这里: 刻度11 &gt;= T1的timestamp, 而且 T2的timestamp &gt;= 13.  </p>
+<p>Spanner巧妙的通过Truetime和Commit Wait, 保证了T1的timestamp &lt; T2的timestamp.</p>
+<h1 id="Snapshot-read"><a href="#Snapshot-read" class="headerlink" title="Snapshot read"></a>Snapshot read</h1><p>Snapshot read指的是读取过去时间的某个快照, 无需加锁.<br>client可以指定一个timestamp  t, 或者时间范围,Spanner会寻找一个数据充分更新好的replica来提供读服务.<br>所谓数据充分更新好, 是指t &lt;= tsafe. 其中tsafe定义如下:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314863000.png" alt="tsafe"><br>前者指的已经提交的事务tiemstamp, 后者指的是正在2PC过程中未决的事务timestamp-1.<br>如果t&gt;tsafe , Spanner需要等待replica一段时间, 待tsafe推进后再进行读操作.<br>基于External Consistency特性,  Spanner可以感知操作的先后顺序, 给定一个时间戳t, Spanner能够明确哪些是历史数据, 并提供一致的快照. </p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>Spanner的TureTime API设计非常巧妙, 保证了绝对时间一定是落在TT.now()返回的区间之中. 基于这个保证, 使得分布在全球的spanserver分配的timestamp都是基于同一参考系, 具有可比性. 进而让Spanner能够感知分布式系统中的事件的先后顺序, 保证了External Consistency.<br>但是TureTime API要求对误差的测量具有非常高的要求, 如果实际误差 &gt; 预计的误差, 那么绝对时间很可能就飘到了区间之外, 后续的操作都无法保证宣称的External Consistency.另外, Spanener的大部分响应时间与误差的大小是正相关的.<br>自Spanner在OSDI12发表论文后, Spanner一直在努力减少误差, 并提高测量误差的技术[3], 但是并没有透露更多细节.   </p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1]  Linearizability: acorrectness condition for concurrent objects(ACM TOPLAS 1990)<br>[2]  <a href="../linearizability_and_serializability">Linearizability 和 Serializability</a><br>[3]  Spanner: Becoming a SQL System (SIGMOD17)<br>[4]  Marzullo’s algorithm, <a href="https://en.wikipedia.org/wiki/Marzullo%27s_algorithm" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Marzullo%27s_algorithm</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/16/linearizability_and_serializability/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/16/linearizability_and_serializability/" itemprop="url">Linearizability 和 Serializability</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-16T21:33:00+08:00">
+                2018-03-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed-system/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed system</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>随着信息科技的在人类生活中的不断渗透, 我们数据规模和计算规模也是与日俱增, 某些问题已经无法在单机系统上进行处理, 只能寻求分布式系统的解决方案.</p>
+<p>分布式系统用多个设备来处理特定问题, 但是, 如何保证这样的处理结果像单机系统那样<strong>正确</strong>?<br>这里所谓的<strong>正确</strong>的指的是: 以相同的顺序进行相同的一系列操作, 分布式系统能得到和单机系统相同的结果.</p>
+<p>分布式系统中有个概念叫做Linearizability(线性), 可以用来衡量一个分布式系统的正确程度.  也就是本文主要介绍的内容.  </p>
+<p>本文主要介绍Linearizability概念, 实现Linearizability的意义, 实现Linearizability的难点. 以及简单说明它与Serializability的区别.</p>
+<h1 id="Linearizability的概念"><a href="#Linearizability的概念" class="headerlink" title="Linearizability的概念"></a>Linearizability的概念</h1><p>如果一系列的操作并发交叉进行, 最终形成的history(可以理解为运行记录), 与顺序执行这些操作形成的sequential history相同, 而且这些操作的先后顺序仍然得到保留. 那么这个history我们就称之为是linearizable的[1].</p>
+<p>这个说法是来自论文[1]的正式定义, 理解起来有点烧脑. 但是我有个直白的理解:</p>
+<ul>
+<li>先是简单的情况, 假设操作都可以瞬间生效, 那write操作写入一个值之后,  后续的read操作都应该能读到这个值, 或者读到更加后面的write的值. 而且一个read操作读到某个值后, 它后面的read应该也读到这个值, 或者更加后面的write的值. 这样的一系列操作就是满足linearizable的.</li>
+<li>复杂的情况来了(偏学术), 现实场景中, 一个操作从开始到结束普遍都是有时延的. 比如下文场景一中, 操作1和2的运行时间有一部分重叠, 我们无法区分两者的顺序, 但是可以明确的是: 3在1结束之后开始运行, 而且操作3也在2之后运行. 所以操作3必然能读到操作1的值, 或者读到操作2的值. 这样的话, 这一些列操作就是满足linearizable的.</li>
+</ul>
+<p>现在我列举两个场景, 来形象说明这种偏学术的复杂情况.<br>我们假设现在有一个寄存器, 具有W和R两个操作, 比如W(0)A表示进程A往寄存器写入0这个值, R(0)B表示进程B从寄存器读到0这个值.<br>现实中, 操作从开始到结束是具有时延的, 我们用start[W(0)]表示发起操作, end[W(0)]表示请求结束.</p>
+<h4 id="场景一"><a href="#场景一" class="headerlink" title="场景一"></a>场景一</h4><p>假设现在有如下图所示的场景一:<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314451000.png" alt="h1"></p>
+<p>该场景共有三个操作:</p>
+<ol>
+<li>A进程执行W(1).</li>
+<li>操作1进行的过程中, B读取到0这个值, 用R(0)表示.</li>
+<li>操作1和操作2都结束后, B进程再次读取, 得到了1这个值, 用R(1)表示.</li>
+</ol>
+<p>注意这三个操作中隐含的先后顺序: 操作1先于操作3, 操作2先于操作3.</p>
+<p>这个并发执行的场景对应的history如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">start[W(1)]A</span><br><span class="line">start[R(0)]B</span><br><span class="line">end[W(1)]A</span><br><span class="line">end[R(0)]B</span><br><span class="line">start[R(1)]B</span><br><span class="line">end[R(1)]B</span><br></pre></td></tr></table></figure></p>
+<p>这个history可以找到一个等价的sequential history,:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">start[R(0)]B</span><br><span class="line">end[R(0)]B</span><br><span class="line">start[W(1)]A</span><br><span class="line">end[W(1)]A</span><br><span class="line">start[R(1)]B</span><br><span class="line">end[R(1)]B</span><br></pre></td></tr></table></figure></p>
+<p>而且这个sequential history相当于依次执行: 操作2, 操作1, 操作3.<br>这个sequential history仍然保持了操作1—&gt;操作3,  操作2—&gt;操作3的先后顺序. 也即是等价于场景一.<br>因此, 根据论文[1], 场景一可以认为是linearizable的.</p>
+<h4 id="场景二"><a href="#场景二" class="headerlink" title="场景二"></a>场景二</h4><p>再看如下的场景二, 该场景并不满足linearizable的限制 :<br><img src="http://blog-10049763.cos.myqcloud.com/images/1497314492000.png" alt="h2"><br>在这个场景中, 当B执行W(1)的同时, A也在读取, 而且已经读取到了1这个值, 也即是有以下关系成立:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt; R(1)A</span><br></pre></td></tr></table></figure></p>
+<p>之后C执行W(0), 也即是:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt;R(1)A---&gt;W(0)C</span><br></pre></td></tr></table></figure></p>
+<p>W(0)C结束之后, B读取这个值, 也就是有以下关系成立:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">W(1) B---&gt;R(1)A---&gt;W(0)C---&gt;R(1)B</span><br></pre></td></tr></table></figure></p>
+<p>从中, 我们发现B竟然还读取到1这个值, 它其实是应该读到0这个值的.<br>所以这个场景是不满足linearizable.</p>
+<h1 id="分布式系统中的Linearizability"><a href="#分布式系统中的Linearizability" class="headerlink" title="分布式系统中的Linearizability"></a>分布式系统中的Linearizability</h1><p>分布式系统中, 如果可以按照操作发生的先后顺序, 构造一个linearizable的运行记录, 那么这个特性就称之为的Linearizability(线性). </p>
+<p>拿zookeeper来举例, 我们应该都知道zookeeper的follower read特性. 如果你从follower上读取数据, 你读到的数据可能是旧的(原因可能是新数据还没apply). 也就是t1时刻更新了zk节点, 在t1之后, 读到的数据可能还是t1之前的. 所以zookeeper是不满足线性的.</p>
+<p>zookeeper不满足线性的原因是follower上的read操作和apply操作没有进行重排, 也就是后面的read操作先于t1那个事务的apply操作.<br>解决这个问题的办法, 可以参考tidb的做法, 将read操作也进行一次raft log, 相当于对read操作的顺序重排到了raftlog中, 排在apply之后.</p>
+<p>不满足线性的另一种原因是, 无法感知/重排这些操作的先后顺序. 举例来说, 假设现在有一个全球部署的分布式存储系统, <strong>先后</strong>发生以下4个操作<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">a. x = 1, 在中国发生</span><br><span class="line">b. read x, 在美国发生</span><br><span class="line">c. x = 2, 在日本发生</span><br><span class="line">d. read x, 在美国发生</span><br></pre></td></tr></table></figure></p>
+<p>按照直觉来想, 操作b读取到的x值肯定是1, 操作d读取到的x值肯定是2.  但这一切都是建立在系统能够感知这些操作的先后顺序之上, 比如在操作b中, 坐落于美国的server可以意识到操作a已经先发生. </p>
+<p>但是在现实的分布式场景中, 我们的系统并不能像上帝一样, 可以清楚的知道世界各角落中, 每个操作的先后顺序, 除非我们为每一个操作都标记上统一的, 单调递增的id, 这个id的功能一般由timestamp来充当. </p>
+<p>但是, 对于Spanner[2][3]这样全球部署, 或者跨地域部署的系统, 如何来为事务分配timestamp, 才能保证系统的响应时间在可接受的范围内? 如果整个系统采用一个中心节点来分配timestamp, 那么系统的响应时间就变得非常不可控, 对于离中心节点隔了半圈地球的用户来说, 响应时间估计会是100ms级别.</p>
+<p>所以, 我有一篇<a href="../spanner">文章</a>着重介绍Spanner分配timestamp的原理, 也即是TrueTime API.</p>
+<h1 id="Linearizability与Serializability"><a href="#Linearizability与Serializability" class="headerlink" title="Linearizability与Serializability"></a>Linearizability与Serializability</h1><p>需要注意的是Linearizability其实是无关于并发控制的, 它只是关于操作顺序的一种限制. 与Linearizability很容易混淆的一个术语是Serializability, 这个特性才是关于并发控制的一个限制. 如果一个系统, 可以将并发的<em>事务</em>按照某种调度, 达到的效果和某种串行执行的效果一样(也就是各事务的操作不会相互交错), 那么这个特性就叫Serializability.</p>
+<p>Serializability着重于保证编程模型中的一些约束, 这些约束大部分是人为规定的. MySQL的默认RR隔离级别是没有保证Serializability, 因为RR并不能防止Lost Update和Write Skew的发生, 这两种情况都会破坏一些约束, 具体请参考Weak Isolation in Relational Databases[4].</p>
+<p>对于单机数据库系统,  单机数据库系统维持一个统一的, 递增的事务id是轻而易举的事情, 所以可以认为它们天生就是具有Linearizability特性. 另外, 有些数据库系统, 比如MySQL, 它所支持的Serializable隔离级别便是本文所说的Serializability的特性.<br>所以, 我们可以看到, 所谓的Serializability便是ACID中的I, 至于Linearizability, 是针对于分布式系统而言的一个难点.</p>
+<h1 id="Linearizability的意义"><a href="#Linearizability的意义" class="headerlink" title="Linearizability的意义"></a>Linearizability的意义</h1><p>现在的数据库系统, 都具有Snapshot read的概念, 所谓Snapshot read指的是对于系统的读操作, 只是过去某一时刻的一个快照, 也就是对应于该事务id所能看到的一份历史数据, 在Spanner的场景来说, 也就一个指定的timestamp所能看到的一份历史数据.</p>
+<p>如果一个分布式系统能够对”历史”有所感知的话, 也就意味着能够感知操作的前后顺序, 也就是说这个系统支持Linearizability.<br>如果一个分布式系统无法支持Linearizability, 那么对于指定一个timestamp所能看到的历史数据, 每次可能是不一样的, 举例来说, 假设现在有一个全球部署的分布式存储系统, <strong>先后</strong>发生以下3个操作:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">a. x = 1, 分配的timestamp为s1</span><br><span class="line">b. 指定timestamp s2执行read x</span><br><span class="line">c. x = 2, 分配的timestamp为s3</span><br><span class="line">d. 指定同一个timestamp s2执行read x</span><br></pre></td></tr></table></figure></p>
+<p>假设s2 &gt; tabs(a),  意思是s2是在操作a之后一个timestamp,  按照直觉来想, 肯定满足s2&gt;s1的关系式, 但是对于不支持Linearizability的系统来说, 可能存在s2 &lt; s1, 导致操作b这个Snapshot read无法看到a操作的结果.</p>
+<p>类似, 还假设s2 &lt; tabs(c), 但是可能存在s2 &gt; s3, 导致操作d这个Snapshot read看到了c操作的结果.</p>
+<p>注意, 操作b和d的都指定同一个timestamp=s2进行Snapshot read,  但是b和d看到的历史数据却是不一样的, 也就是说, 对于同一个timestamp对应的快照竟然不一样.</p>
+<p>到这里可以看出来, 不支持Linearizability的分布式系统, Snapshot read便无从谈起, Snapshot Isolation也就是不可能的事情. </p>
+<blockquote>
+<p>有些系统实现了”部分顺序”, 也就是在单个节点(或者说单个分区)内的Linearizability, 也就是能做到单机Snapshot, 但是没有全局的Snapshot.</p>
+</blockquote>
+<h1 id="实现Linearizability的难点"><a href="#实现Linearizability的难点" class="headerlink" title="实现Linearizability的难点"></a>实现Linearizability的难点</h1><p>从上述描述中, 可以看到, 实现Linearizability首先需要对系统中每个事务分配一个统一的,单调递增的id, 一般来说是timestamp. 那么, 在分布式系统中, 如何协调这个timestamp呢?</p>
+<p>对于这个问题, 我们可能会很迅速的想到一个方案: 引入一个专门生成timestamp的中心节点, 每次事务提交时, 访问该中心节点来获得timestamp. TiDB使用的便是这种方案, 它利用TimeStamp Oracle模块来提供授时服务. 但是这种方案引入了中心节点, 也意味着整套系统的部署不可能在地理位置上过于分散, 否则事务延时将会令人难以忍受.</p>
+<blockquote>
+<p>需要指出的是, 逻辑时钟(比如Lamport时钟和Vector时钟)无法实现Linearizability, 因为它只能区分有”因果关系(也就是有通信)”的事件间的顺序. 所以, 类似于”事务T2在事务T1提交后才开始提交”这样的场景, 当节点间没有发生通信时, 逻辑时钟无法区分这两个事务的顺序.</p>
+</blockquote>
+<p>那么, Spanner是如何在这种全球部署的分布式系统中保证Linearizability的. 在全球分布式系统中,  真实世界里两个事务, 先后在不同的地方commit, 系统怎样去如实反映事务的commit顺序? 具体详情可以参考这篇文章:<a href="../spanner">关于Spanner中的TrueTime和Linearizability</a></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1]  Linearizability: acorrectness condition for concurrent objects(ACM TOPLAS 1990)<br>[2]  Spanner: Google’s Globally-Distributed Database (OSDI12)<br>[3]  Spanner: Becoming a SQL System (SIGMOD17)<br>[4]  Weak Isolation in Relational Databases, <a href="http://www.evanjones.ca/db-isolation-semantics.html" target="_blank" rel="noopener">http://www.evanjones.ca/db-isolation-semantics.html</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/15/gtid-and-failover/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/03/15/gtid-and-failover/" itemprop="url">MySQL GTID介绍, 以及GTID在failover中的使用</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-15T19:34:14+08:00">
+                2018-03-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这篇关于GTID的文章是我在15年写下的学习笔记, 当时所在的云数据库团队需要新上MySQL 5.6-GTID的实例, 并且需要升级数据库管控系统的功能. 主要是将MySQL的failover和switchover流程从以往的文件位点(file&amp;pos)的方式升级到GTID的方式.  当时调研的过程中便写下了这个笔记. 如今已经是18年,  我又萌生了写博的想法(大学的时候有写, 工作之后就完全荒废了), 所以重新整理发到博客上, </p>
+<p>对于一主多从的MySQL复制拓扑来说, 使用file&amp;pos的同步方式对failover的过程来说是非常不友好的, 因为当复制拓扑中的Master宕机并新选出某个Slave作为New Master后, 其他Slave如何与New Master建立主从关系是个比较头痛的问题, 主要是因为其他Slave需要找到一个合适的位点来连接New Master, 这是一个很费力的过程: 扫描Slave各自的relaylog并找到在New Master上对应的位点.</p>
+<p>但是, 如果使用了GTID, 一切都变得简单了.</p>
+<h2 id="GTID介绍"><a href="#GTID介绍" class="headerlink" title="GTID介绍"></a>GTID介绍</h2><h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h3><p> GTID (global transaction identifier)是已提交事务的唯一表示, 不单在它产生的originating server是唯一的, 在复制拓扑中的所有server范围内都是唯一的, 该特性当gtid_mode=ON时才生效.</p>
+<p>GTID的格式:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source_id:transaction_id</span><br></pre></td></tr></table></figure></p>
+<p>其中:</p>
+<ul>
+<li>source_id就是产生该事务所在server的server_uuid,</li>
+<li>transaction_id与事务提交顺序有关, 取值从1开始, 之后在同一个originating server的提交的事务, 它的transaction_id逐一递增.</li>
+</ul>
+<p>比如,在 UUID为 3e11fa47-71ca-11e1-9e33-c80aa9429562 的server上提交的第58个事务的 GTID是:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3e11fa47-71ca-11e1-9e33-c80aa9429562:58</span><br></pre></td></tr></table></figure>
+<h3 id="GTID-Set"><a href="#GTID-Set" class="headerlink" title="GTID Set"></a>GTID Set</h3><p>若干系统函数, 系统变量的输出形式是GTID set.<br>GTID set的形式如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">uuid:interval [, uuid:interval]</span><br></pre></td></tr></table></figure></p>
+<p>其中interval是1或者1-5这样的区间.</p>
+<p>比如GTID_SUBTRACT(set, subset)这个函数, 返回值是一个new set, 其中newset = set - subset. 像下面的例子:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select GTID_SUBTRACT(&apos;f76eb90f-82a2-11e5-a162-7ca23e9126c5:1-5,f76eb90f-82a2-11e5-a162-7ca23e9126c5:10-15&apos;, &apos;f76eb90f-82a2-11e5-a162-7ca23e9126c5:1-2&apos;)</span><br></pre></td></tr></table></figure></p>
+<p>返回结果:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">f76eb90f-82a2-11e5-a162-7ca23e9126c5:3-5:10-15</span><br></pre></td></tr></table></figure></p>
+<h3 id="GTID生命周期"><a href="#GTID生命周期" class="headerlink" title="GTID生命周期"></a>GTID生命周期</h3><p>我们可以在binlog里看到GTID, 并通过GTID分辨出事务来自哪个server. 另外, 如果事务已经在某个server上提交了,  后续的具有相同GTID的事务将会被忽略. 这样提供了一致性保证.</p>
+<p>使用GTID后, slave不再需要master的上的文件名和偏移量(file&amp;pos), 也即是 CHANGE MASTER TO语句不再需要指定MASTER_LOG_FILE 和 MASTER_LOG_POS参数.  </p>
+<ol>
+<li>事务在master上提交时, 被赋予一个GTID, GTID会立即写到binlog中,在事务本身的前面:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/1fa378b0-2e20-46a4-a106-ef716daf3040.jpg" alt="alt"></li>
+<li>binlog数据传输到slave上并存到relay log后, slave将读取GTID, 并设置到gtid_next这个变量里, 之后slave上提交的事务必须使用这个GTID. 也就是说, slave对这个事务不产生新的GTID. </li>
+<li>slave确认这个GTID没有被自己的binlog使用后, 开始执行事务. 事务提交时会将GTID写到binlog,  并将事务的其他event写到binlog中.  </li>
+</ol>
+<h3 id="系统变量GTID-NEXT"><a href="#系统变量GTID-NEXT" class="headerlink" title="系统变量GTID_NEXT"></a>系统变量GTID_NEXT</h3><p>gtid_next是session变量, 默认值是AUTOMATIC, 表示生成新GTID.<br>slave线程从relaylog读取到GTID后, 会设置gtid_nex参数. 比如, 从relaylog读取到了4d8b564f-03f4-4975-856a-0e65c3105328:4711这个GTID, 它会执行下面这个语句:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET GTID_NEXT = 4d8b564f-03f4-4975-856a-0e65c3105328:4711;</span><br></pre></td></tr></table></figure></p>
+<p>mysqlbinlog也使用这样的机制, 当它读取到一个gitd-event, 便输出一个SET GTID_NEXT 语句.</p>
+<p>当一个事务提交时, innodb会检查它是会否已经存在于系统变量GTID_EXECUTED中, 如果存在的话, 这个事务将会被忽略.</p>
+<h3 id="系统变量GTID-EXECUTED"><a href="#系统变量GTID-EXECUTED" class="headerlink" title="系统变量GTID_EXECUTED"></a>系统变量GTID_EXECUTED</h3><p>变量GTID_EXECUTED中, 存有所有写到binlog中的所有gitd set, 它的值和SHOW MASTER STATUS 或者SHOW SLAVE STATUS中的<code>Executed_Gtid_Set</code>字段是一样的.<br>比如server上应用了下事务:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:1</span><br><span class="line">0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:2</span><br><span class="line">4D8B564F-03F4-4975-856A-0E65C3105328:1</span><br><span class="line">0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:3</span><br><span class="line">4D8B564F-03F4-4975-856A-0E65C3105328:2</span><br></pre></td></tr></table></figure></p>
+<p>那么, GTID_EXECUTED的值就是:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;0EB3E4DB-4C31-42E6-9F55-EEBBD608511C:1-3,</span><br><span class="line">4D8B564F-03F4-4975-856A-0E65C3105328:1-2&quot;</span><br></pre></td></tr></table></figure></p>
+<p>对于slave, 如果io线程收到到数据, 存放在relaylog中,  可以通过show slave status查看Retrieved_Gtid_Set字段, 了解slave已经收到的事务.</p>
+<h3 id="复制协议"><a href="#复制协议" class="headerlink" title="复制协议"></a>复制协议</h3><p>在5.6之前的主从复制, 当slave连接master时, 需要指定master的binlog位点(file&amp;pos), 然后master发送这个点之后的所有数据.</p>
+<p>现在新的协议是: </p>
+<ol>
+<li>当slave连接master时, 发送它已经执行过的事务gitd区间.</li>
+<li>master发送其他的事务给slave, 也就是slave还没有执行的事务.</li>
+</ol>
+<p><img src="http://blog-10049763.cos.myqcloud.com/wiznote/a1631460-7a3a-44c1-a7d8-a03c95a4a5e8.jpg" alt="alt"></p>
+<h3 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h3><ul>
+<li><code>GTID_SUBSET()</code>Return true if all GTIDs in subset are also in set; otherwise false.</li>
+<li><code>GTID_SUBTRACT()</code>Return all GTIDs in set that are not in subset.</li>
+<li><code>WAIT_FOR_EXECUTED_GTID_SET()</code>    Wait until the given GTIDs have executed on slave.</li>
+<li><code>WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS()</code> Wait until the given GTIDs have executed on slave.</li>
+</ul>
+<h3 id="搭建主从"><a href="#搭建主从" class="headerlink" title="搭建主从"></a>搭建主从</h3><p>master上一定要开启binlog, 以及配置serverid<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">log-bin=mysql-bin</span><br><span class="line">server-id=1</span><br></pre></td></tr></table></figure></p>
+<p>启动master, 注意打开gtid_mode:<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqld_safe --gtid_mode=ON --<span class="built_in">log</span>-bin --<span class="built_in">log</span>-slave-updates --enforce-gtid-consistency&amp;</span><br></pre></td></tr></table></figure></p>
+<p>启动slave, 注意加上skip-slave-start 选项:<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqld_safe --gtid_mode=ON --<span class="built_in">log</span>-bin --<span class="built_in">log</span>-slave-updates --enforce-gtid-consistency --skip-slave-start</span><br></pre></td></tr></table></figure></p>
+<p>在slave执行:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CHANGE MASTER TO  MASTER_HOST = host, MASTER_PORT = port, MASTER_USER = user, MASTER_PASSWORD = password, MASTER_AUTO_POSITION = 1;</span><br><span class="line">START SLAVE;</span><br></pre></td></tr></table></figure>
+<p> 这样简单的一主一从就搭建好了.</p>
+<p>具体操作:<br><a href="http://dev.mysql.com/doc/refman/5.6/en/replication-gtids-howto.html" target="_blank" rel="noopener">http://dev.mysql.com/doc/refman/5.6/en/replication-gtids-howto.html</a></p>
+<h2 id="GTID在failover中的使用"><a href="#GTID在failover中的使用" class="headerlink" title="GTID在failover中的使用"></a>GTID在failover中的使用</h2><h3 id="场景1-newest-slave当作new-master"><a href="#场景1-newest-slave当作new-master" class="headerlink" title="场景1: newest slave当作new master"></a>场景1: newest slave当作new master</h3><p>考虑下图的一主两从星型结构, A当作master, B,C都是它的slave:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/2a46fe22-b46c-450c-8f13-c6d691b65c91.jpg" alt="alt"></p>
+<p>假设现在A宕机了, 我们需要做切换操作, 从B和C中找一个server来当作新的master, 并把其他的server当作它的slave:</p>
+<p><img src="http://blog-10049763.cos.myqcloud.com/wiznote/ce92f4c3-8388-4977-8a9a-3773ca00b0d3.jpg" alt="alt"></p>
+<p>由于主从复制是异步的, B和C从原来的master中收到的、应用的事务个数都不一样, 可能其中一个数据比较新. 假设B的数据比C要新, 我们将B当作新的master. 那么我们需要将C当作B的slave, 并从C还没应用的事务开始主从复制.<br>假设A提交了3个事务,  B复制了这3个事务,  但是C只复制了第一个事务:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/7fb9edf3-cdb9-440c-a90f-87cfe3dcbec4.jpg" alt="alt"></p>
+<p>当A宕机后, 我们用B当作新的master, 把C当作B的slave. 在新的 replication协议下, C将会发送id1给B, 之后B将会把C没有执行的事务, 也就是(id2,tr2) , (id3, tr3) 发送给C, 之后在B上新提交的事务, 也会源源不断的发送给C.</p>
+<h3 id="场景2-任意指定某-slave当作new-master"><a href="#场景2-任意指定某-slave当作new-master" class="headerlink" title="场景2: 任意指定某 slave当作new master"></a>场景2: 任意指定某 slave当作new master</h3><p>有些时候, newest slave并不是理想的 new master, 可能是它的硬件配置不高, 网络不好. 我们一开始就预先选定了某硬件很强劲的slave当作备选master.</p>
+<p>在下图中, 一开始A是master, BCD都是slave. 而且我们指定B当作备选master:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/a9c26049-2968-4d23-a9c0-821153effd1e.jpg" alt="alt"></p>
+<p>假设这时候A宕机了, 这个时候需要作切换, 因为D现在是newest, 就简单的做法就是将D当作新的master, 让其他server当作slave. 但是我们现在要把B当作新的master, 在此之前, 我们要更新B的数据, 做法是让B当作D的slave, 当B追上D时, 再切换B为master.</p>
+<p>但是上图仅仅是现实情况的简化版, 真实情况是,  slave可能已经将数据写到relaylog 但是还没有应用这些事务, 如下图:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/ec75c19b-6624-4eaa-9101-60bc1f568b4c.jpg" alt="alt"></p>
+<p>这个情景中, BCD分别收到了1, 2, 3个事务, 但是B一个事务都还没应用, C应用了2个, D应用了1个.</p>
+<p>我们的目标是把B当作新的master, 再这之前需要更新他的数据. </p>
+<p>第一种做法是, 让B依次连接C和D, 连接后, 等待B执行完C或者D中relaylog和binlog中的事务. 这样一轮下来, B的数据已经是newest, 已经可以切换成为新的master. </p>
+<p>第二种方法, 是找到most slave, 也就是relay log数据最多的slave, 在这个例子中是D, 等待D的sql线程执行完relay log后, 再让B连接D, 等B的数据达到newest后, 切换成为新的master. </p>
+<p>前面说过, slave收到的事务可以在SHOW SLAVE STATUS中的Retrieved_GTID_Set看到,  已经应用的事务可以在变量gtid_executed看到.</p>
+<p>上述第一种做法的操作, 可以下面的伪代码实现, 其中candidate是备选master:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">for each slave in slaves_of_the_master:</span><br><span class="line">    if slave != candidate:</span><br><span class="line">      candidate.query(STOP SLAVE)</span><br><span class="line">      candidate.query(CHANGE MASTER TO</span><br><span class="line">                        MASTER_HOST = slave.host,</span><br><span class="line">                        MASTER_PORT = slave.port)</span><br><span class="line">      candidate.query(START SLAVE)</span><br><span class="line">      slave_executed_gtids :=</span><br><span class="line">          slave.query(SELECT @@GLOBAL.GTID_EXECUTED)</span><br><span class="line">      slave_queued_gtids :=</span><br><span class="line">          slave.query(SHOW SLAVE STATUS)</span><br><span class="line">                     [column = Retrieved_GTID_Set]</span><br><span class="line">      slave_all_gtids :=</span><br><span class="line">          slave_executed_gtids + &apos;,&apos; + slave_queued_gtids</span><br><span class="line">      candidate.query(</span><br><span class="line">          SELECT WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS(</span><br><span class="line">            slave_all_gtids))</span><br></pre></td></tr></table></figure>
+<p>云数据库行业内failover的实现方式稍微更复杂一些, 因为我们需要在RPO和RTO之间做平衡, 首要是保证RPO(也就是尽量保证不丢数据), 但是也要兼顾RTO(不能因为failover中由于额外某些slave的故障导致failover时间太长)</p>
+<h2 id="使用GTID的一些限制"><a href="#使用GTID的一些限制" class="headerlink" title="使用GTID的一些限制"></a>使用GTID的一些限制</h2><p>因为GTID是基于事务的, 当使用GTID时, 一些mysql的特性将会收到限制.</p>
+<ul>
+<li>更新涉及到非事务引擎: 当在一个trx中, 既更新基于事务引擎的表, 又更新了非事务引擎的表, 这种情况会导致这个trx产生多个GTID. 这就破坏了GTID和事务之间一对一的关系, 进而导致基于GTID的主从复制不能正确工作. 其实现在已经很少人这么用, 我们团队5.6数据库已经默认把用户的MyISAM转换成Innodb.</li>
+<li>CREATE TABLE … SELECT语句: 当使用row-based格式的binlog, 这个语句会产生两个独立的event: 一个新建table, 另外一个插入数据. 如果在trx中执行该语句, 这两个event可能会产生相同的GTID, 也就意味着插入数据的那个evnet会被跳过. 其实令一条SQL语句产生两个GTID即可避免这个问题,  对于这一点,  我提了个patch给官方:<a href="https://bugs.mysql.com/bug.php?id=82919" target="_blank" rel="noopener">#82919</a> .</li>
+<li>临时表: 当使用GTID时, 不支持CREATE TEMPORARY TABLE和 DROP TEMPORARY TABLE 这两个语句, 但是如果在事务外, 而且autocommit=1时, 可以执行这两个语句. 也即是事务内才会有问题, 事务外是ok的.</li>
+</ul>
+<p>通过–enforce-gtid-consistency选项, 可以阻止上述语句的执行. 开启该选项后, 相关的语句执行会导致错误.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">create table test2 select * from  test1;</span><br><span class="line">ERROR 1786 (HY000): CREATE TABLE ... SELECT is forbidden when @@GLOBAL.ENFORCE_GTID_CONSISTENCY = 1.</span><br></pre></td></tr></table></figure></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="http://dev.mysql.com/doc/refman/5.7/en/replication-gtids-failover.html" target="_blank" rel="noopener">replication-gtids-failover</a></li>
+<li><a href="http://svenmysql.blogspot.com/2013/03/flexible-fail-over-policies-using-mysql.html" target="_blank" rel="noopener">flexible-fail-over-policies-using-mysql</a></li>
+</ol>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+  </section>
+
+  
+
+
+          </div>
+          
+
+
+          
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4"
+                alt="firnsan" />
+            
+              <p class="site-author-name" itemprop="name">firnsan</p>
+              <p class="site-description motion-element" itemprop="description">Seeker on distributed storage systems</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">firnsan</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
