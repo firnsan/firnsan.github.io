@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="distributed,Paxos,consensus," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言本文参考Paxos made simple这篇论文, 对Paxos算法的推导过程用接地气的场景来表述. 下文会从”n个同学开party, 需要确定谁来当东道主”的场景, 一步一步的推导出Paxos算法. 背景假设有n个同学, 准备周末去某个人家里开party, 他们现在需要确认他们这些人中究竟谁做东道主负责party的举办事宜.每个人都可以提议自己当东道主, 并且有权同意、否决别人的提议(也就">
+<meta name="keywords" content="distributed,Paxos,consensus">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一步一步推导Paxos算法">
+<meta property="og:url" content="http://yoursite.com/2018/04/01/paxos/index.html">
+<meta property="og:site_name" content="io.Seeker">
+<meta property="og:description" content="前言本文参考Paxos made simple这篇论文, 对Paxos算法的推导过程用接地气的场景来表述. 下文会从”n个同学开party, 需要确定谁来当东道主”的场景, 一步一步的推导出Paxos算法. 背景假设有n个同学, 准备周末去某个人家里开party, 他们现在需要确认他们这些人中究竟谁做东道主负责party的举办事宜.每个人都可以提议自己当东道主, 并且有权同意、否决别人的提议(也就">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/4e482269-342d-478d-9396-5783cd998add.jpg">
+<meta property="og:updated_time" content="2018-04-01T02:57:38.906Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一步一步推导Paxos算法">
+<meta name="twitter:description" content="前言本文参考Paxos made simple这篇论文, 对Paxos算法的推导过程用接地气的场景来表述. 下文会从”n个同学开party, 需要确定谁来当东道主”的场景, 一步一步的推导出Paxos算法. 背景假设有n个同学, 准备周末去某个人家里开party, 他们现在需要确认他们这些人中究竟谁做东道主负责party的举办事宜.每个人都可以提议自己当东道主, 并且有权同意、否决别人的提议(也就">
+<meta name="twitter:image" content="http://blog-10049763.cos.myqcloud.com/wiznote/4e482269-342d-478d-9396-5783cd998add.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/01/paxos/"/>
+
+
+
+
+
+  <title>一步一步推导Paxos算法 | io.Seeker</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">io.Seeker</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/01/paxos/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="firnsan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">一步一步推导Paxos算法</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-01T11:15:00+08:00">
+                2018-04-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed-system/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed system</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2018/04/01/paxos/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/2018/04/01/paxos/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文参考Paxos made simple这篇论文, 对Paxos算法的推导过程用接地气的场景来表述. 下文会从”n个同学开party, 需要确定谁来当东道主”的场景, 一步一步的推导出Paxos算法.</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>假设有n个同学, 准备周末去某个人家里开party, 他们现在需要确认他们这些人中究竟谁做东道主负责party的举办事宜.<br>每个人都可以提议自己当东道主, 并且有权同意、否决别人的提议(也就是系统中, 每个节点既是proposer, 又是acceptor).<br>另外,  他们每个人之间都是点对点通信的, 比如说通过微信私聊的方式. </p>
+<p>那么, 通过什么投票方案可以得到一个共识呢? 总体方向肯定就是”多数派原则”了. 但是这个原则之下, 还是有很多边边角角的问题会导致无法达成共识, 还需要有具体措施来规避这些问题.</p>
+<p>下面会从”多数派原则”这个最基本方案, 一步一步的解决遇到的问题, 一次次的迭代,  最终渐渐推导出完善的一套方案: Paxos!</p>
+<p>例如, 下文的版本1只是使用”多数派原则”这个基本方案存在明显的漏洞,  后面的版本2、3、4在版本1的基础上， 一步一步的解决这些问题. </p>
+<h2 id="版本1-多数派原则"><a href="#版本1-多数派原则" class="headerlink" title="版本1 多数派原则"></a>版本1 多数派原则</h2><blockquote>
+<p>问题:<br>无法达成多数派,  出现split vote, 形成僵持局面</p>
+</blockquote>
+<p>假设n=5, 共有ABCDE这些个同学(系统中有5个节点).<br>另外还假设这些同学脾气都很犟, 不肯变通, 自己同意了一个提议后, 打死都不再改变主意了(不允许各个节点accept一个值后, 不能再改变).</p>
+<p>我们看看这样的设定会有什么问题, 最后来思考如何避免这个问题.<br>那么考虑这个场景: 同学A向提议”来我家”, AB都同意了;  与此同时, 同学C提议”来我家”, CD都同意了; 与此同时,同学E提议”来我家”, E自己同意了. 这样下来, 没有一个提议可以形成多数派. </p>
+<p>由于这些同学脾气都很犟, 互不相让,不再改变主意, 那么这次开party肯定就泡汤了, 因为5个同学没有达成一致的共识.</p>
+<blockquote>
+<p>解决方案:<br>允许acceptor改变自己的主意, 如果acceptor即是已经accept了某个值, 后面也可以accept其他的提议.<br>也就是一轮投票不成, 大家可以再商量商量, 不要脾气犟的跟驴一样.</p>
+</blockquote>
+<h2 id="版本2-节点可以接受后续的提议"><a href="#版本2-节点可以接受后续的提议" class="headerlink" title="版本2 节点可以接受后续的提议"></a>版本2 节点可以接受后续的提议</h2><p>在版本1的基础上, 添加一个新措施: 节点可以改变主意, 接受后续的提议. 这样我们就有了迭代2. 我们继续看版本2的问题是什么.</p>
+<blockquote>
+<p>问题:<br>有acceptor在接受一个提议后又改变了主意, 可能会导致系统选择了多个值(conflict choice)</p>
+</blockquote>
+<p>假设n=5, 共有ABCDE这些个同学(系统中有5个节点).<br>另外还假设这些同学脾气都很好, 可以改变自己的主意.</p>
+<p>那么考虑这个场景: 同学A向提议”来我家”, ABC都同意了;  与此同时, 同学E提议”来我家”, CDE都同意了;<br>这里E充当了老好人的作用, 导致这5个同学都以为达成共识了,  同学们里面有两个人都认为自己是东道主了. 最后AB高高兴兴的在A的家里开party, 然而CDE就是在E的家里开party…</p>
+<blockquote>
+<p>解决方案:<br>在proposer提议之前, 再引入一个prepare阶段:  先向所有acceptor发起询问, 询问它有没有已经接受某个值(accepted, 不一定是chosen. 当然, 在Paxos中, 这个accepted的值肯定也是最后被chosen的值), 如果有接受的值, 那proposer必须改变自己的提议值, 使用已经接受的值作为新的提议值. prepare阶段之后, 再进行提议阶段(accept阶段).</p>
+</blockquote>
+<h2 id="版本3-两阶段协议"><a href="#版本3-两阶段协议" class="headerlink" title="版本3 两阶段协议"></a>版本3 两阶段协议</h2><p>在版本2的基础上, 引入了两阶段协议的思想. 这样我们就有了版本3.</p>
+<blockquote>
+<p>问题:<br>系统节点之间的通信没有保障, 消息可能丢失, 也可能延时到达. 可能导致proposer误认为当前还没有被accepted值, 也就是两阶段协议形如虚设,  最后导致了和版本2一样的问题(conflict choice)</p>
+</blockquote>
+<p>假设n=5, 共有ABCDE这些个同学, 他们使用两阶段协议的思想来进行协商.<br>考虑如下图所示场景:<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/4e482269-342d-478d-9396-5783cd998add.jpg" alt="alt"></p>
+<p>同学A发起提议前的prepare阶段发现还没有值被接受, 所以直接提议”来我家”.<br>在他的提议被BC同学看到之前, E同学发起了提议”来我家”(他在prepare阶段也发现当前还没有值被选定).</p>
+<p>由于网络的不可靠, 同学E的提议先于A的提议到达了BC那, 所以BC先accept了同学E的提议. 所以同学E认为已经确定了自己就是开patry的东道主. </p>
+<p>但是, 故事还没有结束, BC同学此后又收到了A同学迟来的提议, 因为同学们都是脾气挺好的老好人, 所以BC改变了主意接受A同学作为东道主.</p>
+<p>所以, 现在的情况又和版本2类似, 同学们里面有两个人都认为自己是东道主了.</p>
+<blockquote>
+<p>解决方案:<br>上述场景中, 因为”迟来”的提议导致了conflict choice的出现, 所以, 我们需要有手段可以屏蔽掉上述场景中那些”迟来”的提议.</p>
+</blockquote>
+<p>方法是为每个提议都进行编号, <em>而且</em>acceptor需要承诺如果已经遇到一个编号为n的提议, 那么后续遇到的编号小于n的提议, 都直接拒绝.</p>
+<h4 id="编号维护"><a href="#编号维护" class="headerlink" title="编号维护"></a>编号维护</h4><p>每个proposer节点都保存自己至今为止所看到、用到过的最大的编号，记为maxProposal.<br>要生成一个新的提议号时，proposer用n=++maxProposal来作为提议编号.</p>
+<blockquote>
+<p>在proposer角度来看, 这个编号可以不需要持久化. 从下文可以知道, 只要acceptor做了持久化即可.</p>
+</blockquote>
+<h2 id="版本4-有序的两阶段协议"><a href="#版本4-有序的两阶段协议" class="headerlink" title="版本4 有序的两阶段协议"></a>版本4 有序的两阶段协议</h2><p>经过多次迭代, 我们已经接近完美的投票流程了. 我们再版本3的基础上, 对所有提议进行编号后, 得到的新版的投票流程如下:</p>
+<h4 id="prepare阶段"><a href="#prepare阶段" class="headerlink" title="prepare阶段"></a>prepare阶段</h4><ul>
+<li>proposer: 发起prepare请求, 请求中携带着本次提议的编号n, 其中n=++maxProposal.</li>
+<li>acceptor: 接到prepare请求时, 如果编号n大于等于promiseProposal,  那么他承诺永远也不会同意提议编号比这n值小的prepare请求, <strong>记为promiseProposal=n, 需要进行持久化</strong>. 另外, 如果它已经accept了某个值, 需要把接受的值(记为acceptedValue)和当时的提议编号(记为acceptedProposal)返回给proposer; 如果n小于promiseProposal, 那么acceptor可以拒绝该请求, 同时要返回自己的promiseProposal以便proposer更新下一次的提议编号.</li>
+</ul>
+<p>proposer在发出prepare请求之如果收到多数派的acceptor的承诺, 那么可以进入accept阶段. 根据acceptor返回的acceptedValue来确定有没有已经被accept的值, 如果有, 我们就要在accept阶段时使用这个值. 否则的话使用自己一开始的提议值.</p>
+<p>如果prepare阶段没有收到多数派的承诺, 说明本次提议已经过期, 需要更新自己的提议编号, 重新发起prepare请求.</p>
+<h4 id="accept阶段"><a href="#accept阶段" class="headerlink" title="accept阶段"></a>accept阶段</h4><ul>
+<li>proposer: 发起accept请求, 请求中携带本次提议的编号n和本次的提议值.</li>
+<li>acceptor: 接到accept请求后, 检查编号n是否大于等于promiseProposal, 如果是, 那么acceptor接受该提议, <strong>更新acceptedProposal和promiseProposal的值为n, 以及更新acceptedValue为提议值, 需要进行持久化</strong>; 如果不是的话, acceptor就拒绝该请求, 同时要返回自己的promiseProposal以便proposer更新下一次的提议编号.</li>
+</ul>
+<p>如果proposer收到了过半数的acceptor的接受，那么它就可以确定自己提议的值被选定了. 否则需要更新提议编号, 重新回到prepare阶段.</p>
+<p>最后我们一步步完善后得到的流程其实就是Paxos算法. 关于Paxos的正确性的证明, 在这里就不赘述了.  Paxos算法的具体流程和证明请参考[1].</p>
+<p>最终, 同学们通过Paxos算法确定了谁家作为东道主, party顺利举行! (当然, 也可能有少数派的同学出状况了没有参加party~~).</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>我们从简单的”多数派原则”, 经过的多次迭代可以简述为如下: </p>
+<ol>
+<li>纯粹”多数派原则”会导致split vote的问题.  </li>
+<li>所以要允许acceptor改变自己的主意, 但这样做会导致多个值被选定(conflict choice).</li>
+<li>所以要引入两阶段协议,  让proposer提议之前, 检查有没有已经被选定的值, 没有的话再来提议. 但是可能会有延时到达的提议, 导致两阶段形同虚设.</li>
+<li>所以要对proposal进行排序.  如果acceptor已经接受了更加新的提议, 对于迟来的老的提议应该拒绝掉.</li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>[1] Paxos made simple</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/wechat-qcode.jpg" alt="firnsan wechat" style="width: 200px; max-width: 100%;"/>
+    <div>subscribe to my blog by scanning my WeChat account</div>
+</div>
+
+      </div>
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/distributed/" rel="tag"># distributed</a>
+          
+            <a href="/tags/Paxos/" rel="tag"># Paxos</a>
+          
+            <a href="/tags/consensus/" rel="tag"># consensus</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/16/linearizability_and_serializability/" rel="next" title="Linearizability 和 Serializability">
+                <i class="fa fa-chevron-left"></i> Linearizability 和 Serializability
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="https://avatars0.githubusercontent.com/u/3955815?s=460&v=4"
+                alt="firnsan" />
+            
+              <p class="site-author-name" itemprop="name">firnsan</p>
+              <p class="site-description motion-element" itemprop="description">Seeker on distributed storage systems</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">2.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版本1-多数派原则"><span class="nav-number">3.</span> <span class="nav-text">版本1 多数派原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版本2-节点可以接受后续的提议"><span class="nav-number">4.</span> <span class="nav-text">版本2 节点可以接受后续的提议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版本3-两阶段协议"><span class="nav-number">5.</span> <span class="nav-text">版本3 两阶段协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#编号维护"><span class="nav-number">5.0.1.</span> <span class="nav-text">编号维护</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版本4-有序的两阶段协议"><span class="nav-number">6.</span> <span class="nav-text">版本4 有序的两阶段协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#prepare阶段"><span class="nav-number">6.0.1.</span> <span class="nav-text">prepare阶段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#accept阶段"><span class="nav-number">6.0.2.</span> <span class="nav-text">accept阶段</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">firnsan</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+      <style>
+        a.gitment-editor-footer-tip { display: none; }
+        .gitment-container.gitment-footer-container { display: none; }
+      </style>
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'firnsan',
+            repo: 'firnsan.github.io',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+                redirect_protocol: 'force_redirect_protocol',
+            
+            
+                client_secret: 'd4b127a630522704c9616e9b361ba328fe91930e',
+            
+                client_id: 'fe6aaeed6c638d706fbe'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
