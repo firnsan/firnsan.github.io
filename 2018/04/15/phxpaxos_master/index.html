@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="distributed,Paxos,consensus," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="背景众所周知, Multi-Paxos算法可以在Proposer没有被其他节点拒绝的情况下, 省略后续Paxos实例的prepare消息, 以此来提高系统的效率. 但是Multi-Paxos算法本身没有限制系统中只有一个Proposer可以发起提议. 所以, 如果系统中所有Proposer都可以随意发起提议, 那么Multi-Paxos算法就会退化, 无法提高系统的效率.  所以我们需要选择一个P">
+<meta name="keywords" content="distributed,Paxos,consensus">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PhxPaxos源码分析之选举和租约">
+<meta property="og:url" content="http://yoursite.com/2018/04/15/phxpaxos_master/index.html">
+<meta property="og:site_name" content="io.Seeker">
+<meta property="og:description" content="背景众所周知, Multi-Paxos算法可以在Proposer没有被其他节点拒绝的情况下, 省略后续Paxos实例的prepare消息, 以此来提高系统的效率. 但是Multi-Paxos算法本身没有限制系统中只有一个Proposer可以发起提议. 所以, 如果系统中所有Proposer都可以随意发起提议, 那么Multi-Paxos算法就会退化, 无法提高系统的效率.  所以我们需要选择一个P">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-04-15T12:52:07.885Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PhxPaxos源码分析之选举和租约">
+<meta name="twitter:description" content="背景众所周知, Multi-Paxos算法可以在Proposer没有被其他节点拒绝的情况下, 省略后续Paxos实例的prepare消息, 以此来提高系统的效率. 但是Multi-Paxos算法本身没有限制系统中只有一个Proposer可以发起提议. 所以, 如果系统中所有Proposer都可以随意发起提议, 那么Multi-Paxos算法就会退化, 无法提高系统的效率.  所以我们需要选择一个P">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/15/phxpaxos_master/"/>
+
+
+
+
+
+  <title>PhxPaxos源码分析之选举和租约 | io.Seeker</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">io.Seeker</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/15/phxpaxos_master/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="io.Seeker">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/wechat-qcode.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">PhxPaxos源码分析之选举和租约</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-15T20:50:00+08:00">
+                2018-04-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed-system/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed system</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2018/04/15/phxpaxos_master/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/2018/04/15/phxpaxos_master/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>众所周知, Multi-Paxos算法可以在Proposer没有被其他节点拒绝的情况下, 省略后续Paxos实例的prepare消息, 以此来提高系统的效率. 但是Multi-Paxos算法本身没有限制系统中只有一个Proposer可以发起提议. 所以, 如果系统中所有Proposer都可以随意发起提议, 那么Multi-Paxos算法就会退化, 无法提高系统的效率. </p>
+<p>所以我们需要选择一个Proposer, 将所有的<code>写请求</code>都交给它进行处理, 防止系统中有多个Proposer同时提议的情况发生. 这个特殊的节点我们称之为Master[1].</p>
+<p>另外, 我们系统中除了写请求之外还有<code>读请求</code>, 对于一些对一致性要求严格的应用, 它可能要求读到最新的数据, 也即是<code>读请求</code>需要能读取到之前所有的更新数据. 如果我们保证所有<code>写请求</code>都在Master上处理的话, 那么从Master上读取的数据应该也是最新的.</p>
+<p>所以总结一下Paxos集群中Master的作用, 主要是两点作用:</p>
+<ol>
+<li>提高系统的效率</li>
+<li>实现读的一致性</li>
+</ol>
+<p>但是如何正确的实现Master选举机制呢, 这里可以分解为两个关键点:</p>
+<ol>
+<li>多数派节点对当前谁担任Master可以达成共识</li>
+<li>集群中任意时刻至多只有一个Master节点</li>
+</ol>
+<p>对于第1点, 可以基于Paxos算法达成达成共识. 某个节点想成为Master需要发起一次Master选举, 也即是运行一次Paxos, 提议内容可以简单认为是”我要当Master”, 当多数派节点接受这个提议后, 该节点就可以认为自己是Master了. </p>
+<p>对于第2点, 可以通过常用的<code>租约</code>手段来保证系统中不会同时有两个Master.  <code>租约</code>指得是Master的任期时间, 当Master还在任期内时, 其他节点不能再发起Master选举. </p>
+<p>那么我们看看PhxPaxos是如何实现选举和租约的.</p>
+<h1 id="PhxPaxos的Master实现"><a href="#PhxPaxos的Master实现" class="headerlink" title="PhxPaxos的Master实现"></a>PhxPaxos的Master实现</h1><p>PhxPaxos基于Paxos算法, 在状态机层面实现了Master选举的功能, 并且具有租约的特性. 应用开发者可以使用PhxPaxos很方便的实现多个节点间Master的选举功能, 不再依赖额外的ZooKeeper集群.</p>
+<h2 id="选举线程"><a href="#选举线程" class="headerlink" title="选举线程"></a>选举线程</h2><p>PhxPaxos中有单独的线程负责Master选举的逻辑. 代码如下所示:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">void MasterMgr :: run()</span><br><span class="line">&#123;</span><br><span class="line">    m_bIsStarted = true;</span><br><span class="line"> </span><br><span class="line">    while(true)</span><br><span class="line">    &#123;  </span><br><span class="line">        if (m_bIsEnd)</span><br><span class="line">        &#123;  </span><br><span class="line">            return;</span><br><span class="line">        &#125;  </span><br><span class="line"> </span><br><span class="line">        int iLeaseTime = m_iLeaseTime; // 当前集群设置的租约时长</span><br><span class="line"> </span><br><span class="line">        uint64_t llBeginTime = Time::GetSteadyClockMS();</span><br><span class="line">         </span><br><span class="line">        // 尝试发起选举/续约</span><br><span class="line">        TryBeMaster(iLeaseTime);</span><br><span class="line"></span><br><span class="line">        // 到下一次续约需要sleep的时间, 大约是1/4租约时间</span><br><span class="line">        // 也即是Master会每隔1/4租约时间后都会尝试续约</span><br><span class="line">        int iContinueLeaseTimeout = (iLeaseTime - 100) / 4;</span><br><span class="line">        iContinueLeaseTimeout = iContinueLeaseTimeout / 2 + OtherUtils::FastRand() % iContinueLeaseTimeout;</span><br><span class="line">         // 如果放弃Master角色(应用程序可以主动放弃自身的Master)</span><br><span class="line">        if (m_bNeedDropMaster)</span><br><span class="line">        &#123;  </span><br><span class="line">            BP-&gt;GetMasterBP()-&gt;DropMaster();</span><br><span class="line">            m_bNeedDropMaster = false;</span><br><span class="line">            iContinueLeaseTimeout = iLeaseTime * 2; // sleep两个租约时间</span><br><span class="line">            PLG1Imp(&quot;Need drop master, this round wait time %dms&quot;, iContinueLeaseTimeout);</span><br><span class="line">        &#125;  </span><br><span class="line"> </span><br><span class="line">        uint64_t llEndTime = Time::GetSteadyClockMS();</span><br><span class="line">        int iRunTime = llEndTime &gt; llBeginTime ? llEndTime - llBeginTime : 0;</span><br><span class="line">        // 需要sleep的时间 = 下次续约时间 - 刚才paxos提议所花的时间</span><br><span class="line">        int iNeedSleepTime = iContinueLeaseTimeout &gt; iRunTime ? iContinueLeaseTimeout - iRunTime : 0;</span><br><span class="line"> </span><br><span class="line">        PLG1Imp(&quot;TryBeMaster, sleep time %dms&quot;, iNeedSleepTime);</span><br><span class="line">        Time::MsSleep(iNeedSleepTime);</span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>选举线程所做的事情很简单, 在循环中不断调用TryBeMaster()尝试发起选举/续约, 然后sleep一段时间. 如此反复.</p>
+<h2 id="TryBeMaster"><a href="#TryBeMaster" class="headerlink" title="TryBeMaster()"></a>TryBeMaster()</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">void MasterMgr :: TryBeMaster(const int iLeaseTime)</span><br><span class="line">&#123;</span><br><span class="line">    nodeid_t iMasterNodeID = nullnode;</span><br><span class="line">    uint64_t llMasterVersion = 0;</span><br><span class="line"></span><br><span class="line">    //step 1 check exist master and get version</span><br><span class="line">    // 从状态机中获取当前的Master角色的信息</span><br><span class="line">    m_oDefaultMasterSM.SafeGetMaster(iMasterNodeID, llMasterVersion);</span><br><span class="line">    // 如果当前系统中已经存在Master但是自己又不是Master角色, 那么就不能发起提议.</span><br><span class="line">    if (iMasterNodeID != nullnode &amp;&amp; (iMasterNodeID != m_poPaxosNode-&gt;GetMyNodeID()))</span><br><span class="line">    &#123;</span><br><span class="line">        PLG1Imp(&quot;Ohter as master, can&apos;t try be master, masterid %lu myid %lu&quot;, </span><br><span class="line">                iMasterNodeID, m_poPaxosNode-&gt;GetMyNodeID());</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BP-&gt;GetMasterBP()-&gt;TryBeMaster();</span><br><span class="line"></span><br><span class="line">    //step 2 try be master</span><br><span class="line">    std::string sPaxosValue;</span><br><span class="line">    if (!MasterStateMachine::MakeOpValue(</span><br><span class="line">                m_poPaxosNode-&gt;GetMyNodeID(),</span><br><span class="line">                llMasterVersion,  // MasterVersion用于乐观锁检查, 后文会详细说明</span><br><span class="line">                iLeaseTime, </span><br><span class="line">                MasterOperatorType_Complete,</span><br><span class="line">                sPaxosValue))</span><br><span class="line">    &#123;</span><br><span class="line">        PLG1Err(&quot;Make paxos value fail&quot;);</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    // 微调租约时长:  配置的租约时长-100ms, 尽量让Master的租约先失效.</span><br><span class="line">    const int iMasterLeaseTimeout = iLeaseTime - 100;</span><br><span class="line">    </span><br><span class="line">    // 计算租约失效时刻</span><br><span class="line">    uint64_t llAbsMasterTimeout = Time::GetSteadyClockMS() + iMasterLeaseTimeout; </span><br><span class="line">    uint64_t llCommitInstanceID = 0;</span><br><span class="line"></span><br><span class="line">    SMCtx oCtx;</span><br><span class="line">    oCtx.m_iSMID = MASTER_V_SMID;</span><br><span class="line">    oCtx.m_pCtx = (void *)&amp;llAbsMasterTimeout;</span><br><span class="line">    //  发起提议</span><br><span class="line">    int ret = m_poPaxosNode-&gt;Propose(m_iMyGroupIdx, sPaxosValue, llCommitInstanceID, &amp;oCtx);</span><br><span class="line">    if (ret != 0)</span><br><span class="line">    &#123;   // 提议失败, 原因一般是当前节点的log不是最新的</span><br><span class="line">        BP-&gt;GetMasterBP()-&gt;TryBeMasterProposeFail();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>TryBeMaster()方法负责发起Paxos提议.<br>但是在发起提议之前, 需要判断当前节点能否发起提议, 如果当前系统中已经存在Master但是自己又不是Master角色, 那么就不能发起提议.</p>
+<p>如果确认当前没有Master角色, 那么可以调用Propose()方法[2]发起提议, 提议内容包含:</p>
+<ul>
+<li>NodeID: 当前节点的NodeID.</li>
+<li>MasterVersion: 当前节点保存的Master版本, 取值来自于上次集群选主成功时的InstanceID.</li>
+<li>LeaseTime: 当前集群配置的租约时长.</li>
+</ul>
+<p>其中MasterVersion的作用是用于乐观锁检查.<br>想象这样一种场景, 某个节点X和Master发生了网络分区, 所以该节点在Master租约到期后认为集群中还未有Master角色, 所以发起了Master选举, 如果X提议失败了还好, 万一提议成功那么节点X将会违背算法的保证: 在Master的任期内不能有其他节点发起选举(成功). </p>
+<p>什么情况下X的提议会失败呢? </p>
+<ul>
+<li>X和多数派节点的网络处于分区中.</li>
+<li>或者是X进行propose的时候, 它的InstanceID还没有追上集群最新的InstanceID, 导致提议失败. </li>
+</ul>
+<blockquote>
+<p>PhxPaxos对集群中的Paxos实例运行做了串行限制, 所以Proposer要想propose成功它必须已经追上集群最新的Paxos实例. 因为PhxPaxos的作者认为并发运行Paxos实例的并没有太大的性能优势, 而且并发运行还带来了实现的复杂度(并发运行Paxos实例能否发挥性能优势还是取决于状态机能否并发apply). 其实通过batch优化后性能也不比并发差, 所以干脆就抛弃了并发的特性.</p>
+</blockquote>
+<p>什么情况下X的提议会成功呢?</p>
+<ul>
+<li>X进行propose的那一刻, 它的learner已经学习了集群中所有Paxos实例的提议结果. </li>
+</ul>
+<blockquote>
+<p>注意Master选举和learner学习是不同的线程, 所以Master选举线程调用propose的时候, learner可能已经学习了集群所有的提议结果, 也可能没有.</p>
+</blockquote>
+<p>如果X提议成功了, 有什么方法可以补救吗? 答案就是让状态机检查提议结果中的MasterVersion, 检查通过才学习提议结果:  所有节点的状态机检查提议结果中的MasterVersion,  判断是否和当前自身保存的MasterVersion一致, 如果发现不一致那么直接忽略本次的提议结果.</p>
+<blockquote>
+<p>注意是所有节点的状态机, 包括节点X的. 像这种情况, X也会发现提议中的MasterVersion和learner学习完之后的MasterVersion不一致了.</p>
+</blockquote>
+<h2 id="LearnMaster"><a href="#LearnMaster" class="headerlink" title="LearnMaster()"></a>LearnMaster()</h2><p>我们接下来看看状态机的处理逻辑. Paxos提议结束后, Master选举状态机的Execute()方法会被调用. Execute()方法的主要逻辑在于LearnMaster(), 后者的代码如下所示:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">int MasterStateMachine :: LearnMaster(</span><br><span class="line">        const uint64_t llInstanceID,</span><br><span class="line">        const MasterOperator &amp; oMasterOper,</span><br><span class="line">        const uint64_t llAbsMasterTimeout)</span><br><span class="line">&#123;                                                                                                                                           </span><br><span class="line">    std::lock_guard&lt;std::mutex&gt; oLockGuard(m_oMutex);</span><br><span class="line"> </span><br><span class="line">    PLG1Debug(&quot;my last version %lu other last version %lu this version %lu instanceid %lu&quot;,</span><br><span class="line">            m_llMasterVersion, oMasterOper.lastversion(), oMasterOper.version(), llInstanceID);</span><br><span class="line"> </span><br><span class="line">    if (oMasterOper.lastversion() != 0</span><br><span class="line">            &amp;&amp; llInstanceID &gt; m_llMasterVersion</span><br><span class="line">            &amp;&amp; oMasterOper.lastversion() != m_llMasterVersion)</span><br><span class="line">    &#123;</span><br><span class="line">        BP-&gt;GetMasterBP()-&gt;MasterSMInconsistent();</span><br><span class="line">        PLG1Err(&quot;other last version %lu not same to my last version %lu, instanceid %lu&quot;,</span><br><span class="line">                oMasterOper.lastversion(), m_llMasterVersion, llInstanceID);</span><br><span class="line"> </span><br><span class="line">        PLG1Err(&quot;try to fix, set my master version %lu as other last version %lu, instanceid %lu&quot;,</span><br><span class="line">                m_llMasterVersion, oMasterOper.lastversion(), llInstanceID);</span><br><span class="line">        m_llMasterVersion = oMasterOper.lastversion();</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    if (oMasterOper.version() != m_llMasterVersion)</span><br><span class="line">    &#123;   // 提议中的Master版本已经过时, 直接忽略本次的提议结果</span><br><span class="line">        PLG1Debug(&quot;version conflit, op version %lu now master version %lu&quot;,</span><br><span class="line">                oMasterOper.version(), m_llMasterVersion);</span><br><span class="line">        return 0;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    int ret = UpdateMasterToStore(oMasterOper.nodeid(), llInstanceID, oMasterOper.timeout());</span><br><span class="line">    if (ret != 0)</span><br><span class="line">    &#123;</span><br><span class="line">        PLG1Err(&quot;UpdateMasterToStore fail, ret %d&quot;, ret);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    bool bMasterChange = false;</span><br><span class="line">    if (m_iMasterNodeID != oMasterOper.nodeid())</span><br><span class="line">    &#123;</span><br><span class="line">        bMasterChange = true;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    m_iMasterNodeID = oMasterOper.nodeid();</span><br><span class="line">    if (m_iMasterNodeID == m_iMyNodeID)</span><br><span class="line">    &#123;</span><br><span class="line">        //self be master</span><br><span class="line">        //use local abstimeout</span><br><span class="line">        // 如果自身成为Master, 使用TryBeMaster()中计算的租约失效时刻</span><br><span class="line">        m_llAbsExpireTime = llAbsMasterTimeout;</span><br><span class="line"> </span><br><span class="line">        BP-&gt;GetMasterBP()-&gt;SuccessBeMaster();</span><br><span class="line">        PLG1Head(&quot;Be master success, absexpiretime %lu&quot;, m_llAbsExpireTime);</span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        //other be master</span><br><span class="line">        //use new start timeout</span><br><span class="line">        // 如果别人成为Master, 使用当前时间 + 租约时长作为租约失效时刻</span><br><span class="line">        m_llAbsExpireTime = Time::GetSteadyClockMS() + oMasterOper.timeout();</span><br><span class="line"> </span><br><span class="line">        BP-&gt;GetMasterBP()-&gt;OtherBeMaster();</span><br><span class="line">        PLG1Head(&quot;Ohter be master, absexpiretime %lu&quot;, m_llAbsExpireTime);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    m_iLeaseTime = oMasterOper.timeout();</span><br><span class="line">    // 更新MasterVersion为当前的InstanceID</span><br><span class="line">    m_llMasterVersion = llInstanceID;</span><br><span class="line"> </span><br><span class="line">    if (bMasterChange)</span><br><span class="line">    &#123;                          </span><br><span class="line">        if (m_pMasterChangeCallback != nullptr)</span><br><span class="line">        &#123;</span><br><span class="line">            m_pMasterChangeCallback(m_iMyGroupIdx, NodeInfo(m_iMasterNodeID), m_llMasterVersion);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    PLG1Imp(&quot;OK, masternodeid %lu version %lu abstimeout %lu&quot;,</span><br><span class="line">            m_iMasterNodeID, m_llMasterVersion, m_llAbsExpireTime);</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当提议结束之后,  LearnMaster()会被调用, 首先会进行上述的乐观锁的检查.<br>检查之后, 判断是否自身成为Master, 是的话使用TryBeMaster()中计算的时刻作为租约失效时刻(记为T1).<br>如果是别人成为Master, 使用当前时刻+租约时长作为租约失效时刻(记为T2).<br>其中T1 &lt; T2, 这样设计的目的是可以保证Master自己租约失效后, 非Master节点才认为租约失效.<br>如果非Master节点先认为租约失效, 那么就无法保证在Master的任期内不能有其他节点发起选举. 这是租约机制设计中的一个常识.</p>
+<p>对提议结果学习之后, TryBeMaster()中便可以通过判断Master的租约是否失效来判断当前有没有Master存在, 如果没有才发起新的选举提议.</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>PhxPaxos的Master选举模块实现了以下两点关键特性, 为应用开发者提供了很大的便利:</p>
+<ol>
+<li>多数派节点对当前谁担任Master可以达成共识</li>
+<li>哪怕发生网络分区, 集群中任意时刻至多只有一个Master节点</li>
+</ol>
+<p>而且PhxPaxos的Master选举模块是通过状态机实现, 一定程度上让Master选举逻辑和Paxos算法的解耦, 在设计和编码实现上达到了比较优雅的效果.</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1] Paxos made live<br>[2] <a href="http://www.ioseeker.com/2018/04/04/phxpaxos_paxos/" target="_blank" rel="noopener">PhxPaxos源码分析之Paxos实现</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/wechat-qcode.jpg" alt="io.Seeker wechat" style="width: 200px; max-width: 100%;"/>
+    <div>subscribe to my blog by scanning my WeChat account</div>
+</div>
+
+      </div>
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/distributed/" rel="tag"># distributed</a>
+          
+            <a href="/tags/Paxos/" rel="tag"># Paxos</a>
+          
+            <a href="/tags/consensus/" rel="tag"># consensus</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/04/phxpaxos_paxos/" rel="next" title="PhxPaxos源码分析之Paxos实现">
+                <i class="fa fa-chevron-left"></i> PhxPaxos源码分析之Paxos实现
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/wechat-qcode.jpg"
+                alt="io.Seeker" />
+            
+              <p class="site-author-name" itemprop="name">io.Seeker</p>
+              <p class="site-description motion-element" itemprop="description">Seeker on distributed storage systems</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#PhxPaxos的Master实现"><span class="nav-number">2.</span> <span class="nav-text">PhxPaxos的Master实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#选举线程"><span class="nav-number">2.1.</span> <span class="nav-text">选举线程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TryBeMaster"><span class="nav-number">2.2.</span> <span class="nav-text">TryBeMaster()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LearnMaster"><span class="nav-number">2.3.</span> <span class="nav-text">LearnMaster()</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">io.Seeker</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500604140");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+      <style>
+        a.gitment-editor-footer-tip { display: none; }
+        .gitment-container.gitment-footer-container { display: none; }
+      </style>
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'firnsan',
+            repo: 'firnsan.github.io',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+                redirect_protocol: 'force_redirect_protocol',
+            
+            
+                client_secret: 'd4b127a630522704c9616e9b361ba328fe91930e',
+            
+                client_id: 'fe6aaeed6c638d706fbe'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
