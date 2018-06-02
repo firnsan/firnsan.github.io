@@ -262,6 +262,222 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/06/12/multi_master_mgr/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="io.Seeker">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/wechat-qcode.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="io.Seeker">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/06/12/multi_master_mgr/" itemprop="url">MySQL的几类Multi-Master架构分析之Group Replication</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-12T19:33:00+08:00">
+                2018-06-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我们使用过的、构建过的MySQL服务绝大多数都是Single-Master，整个拓扑中只有一个Master承担写请求。比如，基于主从复制的Master-Slave架构，Master与Slave之间share nothing；或者是类似Aurora基于计算与存储分离的Writer-Reader架构，Writer与Reader之间share storage。</p>
+<p>然而，由于种种原因，我们可能需要MySQL服务具有Multi-Master的特性，希望整个拓扑中可以有不止一个Master承担写请求。业界也有几类Multi-Master架构的解决方案，但是这些方案能不能满足业务的需求呢？</p>
+<p>最近在做异地多活的项目，关于Multi-Master架构有一些点滴想法，怕记性不好忘了，所以在这里做一些总结，主要包括Multi-Master背后的需求、几类Multi-Master架构介绍、具体实现和适用场景。</p>
+<h2 id="为什么"><a href="#为什么" class="headerlink" title="为什么"></a>为什么</h2><p>为什么要用到Multi-Master？这个问题可能每个人想法都不尽相同，每个人的遇到瓶颈不同那么他的需求也不同，列举如下：</p>
+<ul>
+<li>单个Master扛不住写流量了，使用Multi-Master可以实现写扩展吗？</li>
+<li>用户分布在天南海北，想让各地域的用户就近访问， 使用Multi-Master可以实现吗？</li>
+<li>担心region整体故障导致服务不可用，想在不同地域同时部署业务，互为灾备，平时也分摊流量， 使用Multi-Master可以实现吗？</li>
+</ul>
+<p>所以可以进一步归纳为：</p>
+<ul>
+<li>写性能可以近似线性扩展吗？</li>
+<li>支持跨region部署吗？</li>
+</ul>
+<p>那么Multi-Master能实现这些全部需求吗，或者能实现其中个把个需求？</p>
+<p>这里将会介绍业界的几类方案，并分析它的适用场景。</p>
+<h2 id="业界方案"><a href="#业界方案" class="headerlink" title="业界方案"></a>业界方案</h2><p>业界有几类Multi-Master架构的解决方案，列举如下</p>
+<ul>
+<li>Group Replication：MGR，MySQL5.7及以上支持；Share nothing。</li>
+<li>Async Bidirectional Replication：这个洋气的名字是我编的，其实就是现在很多“异地多活”使用的“异步双向复制”方案；Share nothing。</li>
+<li>Aurora Multi-Master ：Aurora的新科技，目前支持单region内的Multi-Master，具体实现没有详细纰漏；Share storage： write distributed leger (redo) but  read data page。</li>
+</ul>
+<p>从Single-Master架构扩展到Multi-Master后，我们比较关心架构是怎么处理写请求的，性能有什么变化，多个Master同时修改同一条记录怎么办？</p>
+<p>所以下面将会从<strong>事务提交过程、冲突检测和解决、适用场景</strong>几个方面来介绍这些方案。</p>
+<p>其中关于Aurora Multi-Master的分析，由于资料有限，所以这里只是我的一些猜测，可能存在一些不正确的描述。</p>
+<h2 id="Group-Replication"><a href="#Group-Replication" class="headerlink" title="Group Replication"></a>Group Replication</h2><p>MySQL Group Replication（MGR）是MySQL官方通过插件形式提供的特性，主要有以下特点：</p>
+<ul>
+<li>数据强一致：即使发生failover，数据也保证不丢、不乱。</li>
+<li>服务高可用：自治的探活机制，发生故障自动failover。</li>
+<li>Multi-Master：具有冲突检测、解决机制，允许多个Master同时承担写流量。</li>
+</ul>
+<h3 id="事务提交过程"><a href="#事务提交过程" class="headerlink" title="事务提交过程"></a>事务提交过程</h3><p>MGR是典型的share nothing架构，节点之间需要通过replication来保持各自数据“一致”，同时提高数据可靠性。但是只有replication还无法保证拓扑中各个副本的一致性，MGR使用Paxos的变种算法(eXtended COMmunications, 简称XCOM)来实现副本的一致性。</p>
+<p>MGR中事务的生命周期：</p>
+<ol>
+<li>事务在各自节点启动、执行，这个过程无需和拓扑中的其他节点进行协调，如下所示，client在某个Master进行更新：<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/1a4081ae-30c9-42c2-885d-5215c0099164.jpg" alt="alt"></li>
+</ol>
+<ol>
+<li><p>当事务需要commit时，将更新数据（binlog以及write_set）当做提议内容，通过XCOM广播、复制到其他所有节点的XCOM模块。<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/44f0f7a8-04c1-4584-aada-46457c1d2db0.jpg" alt="alt"></p>
+</li>
+<li><p>所有节点的XCOM模块负责对提议内容进行投票，达成共识。如果同时有多个提议，那么对于提议之间的顺序关系也会有一个共识。<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/a473ce9f-a17c-4485-8e5e-8f0f46c2a140.jpg" alt="alt"></p>
+</li>
+<li><p>所有节点需要去学习达成的这些共识，也即是commit该事务（如果没有数据冲突）或者终止该事务（如果有数据冲突）。</p>
+</li>
+</ol>
+<p>以上就是MGR中事务的提交过程，关于数据冲突的检查和解决，MGR有专门的certification模块来负责，稍后会着重介绍。先来看看XCOM的实现。</p>
+<p>XCOM是MGR的核心，提供了原子广播的功能，并且支持多个Master（Proposer）同时进行提议。<br>熟悉Paxos的同学可能会问，绝大多数Paxos的工程实现会采用Multi-Paxos，也即是通过一轮完整的Paxos实例（prepare、accept和learn）选出一个稳定的Leader，让group中只有1个Proposer提议（可以多个提议并发），这样就不需要prepare的过程了。Multi-Paxos的一个示意如下所示：<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/2ed3da6a-d59d-406b-8d07-f820a07fe34e.jpg" alt="alt"></p>
+<p>所以， XCOM既然支持Multi-Master，那么多个Proposer提议导致ballot number相互干扰怎么办？</p>
+<p>在XCOM算法中，每个节点有一个唯一的编号，而且控制着特定的Slot。比如下图中，共有三个节点，编号分别是0,1,2。</p>
+<p><img src="http://blog-10049763.cos.myqcloud.com/wiznote/356c1a97-f6bd-4e9e-a7a3-07cad3af081a.jpg" alt="alt"></p>
+<p>节点0的slots: 0, 3, 6, …<br>节点1的slots: 1, 4, 7, …<br>节点2的slots: 2, 5, 8, … </p>
+<p>正常情况下，节点只会在自己的slot进行提议，而且在属于自己的slot中，它就是Leader提议无需经过prepare阶段。</p>
+<p>但是有些情况下，节点需要替其他slot触发noop提议，因为上述算法会导致gap产生，如下所示，节点1和节点2已经就slot1和slot2的消息已经达成共识，但是slot0的消息还没有共识：<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/84ff5d17-beae-4d92-8b2e-ffaa2d067807.jpg" alt="alt"></p>
+<p>在这种情况下，节点1、节点2在未得知slot0对应的消息，是不能对slot1和slot2的消息进行apply的。所以需要有人在slot0提议一个noop消息，令整个系统继续往前推进。如果slot0的主人（节点0）还正常的话，它会在恰当的情况下提议一个noop消息，否则的话，需要有其他节点（节点1或节点2）替它在slot0提议一个noop消息（需要走完整的paxo实例，相当于需要竞争Leader角色）。</p>
+<p>以上是MGR的事务提交流程和XCOM的实现细节，接下来看看MGR是如何进行冲突检测和解决。</p>
+<h4 id="冲突检测和解决"><a href="#冲突检测和解决" class="headerlink" title="冲突检测和解决"></a>冲突检测和解决</h4><p>Multi-Master架构下，如果多个Master互相不知情的下同时修改了某一个记录，MGR需要有能力检测出来这个冲突，并依据策略规则解决这个冲突（比如按照先来者为准），保证所有节点的数据一致。</p>
+<h5 id="冲突检测"><a href="#冲突检测" class="headerlink" title="冲突检测"></a>冲突检测</h5><p>MGR的冲突检测依赖于事务的write_set和事务执行时的快照版本（类似于GTID_SET）。<br>write_set可以简单认为是一个vector，包含了事务修改的每一行记录的primary key。</p>
+<p>MGR通过某事务的write_set可以知道它涉及的那些记录，certification模块依次将每条记录的快照版本和本地的版本库（由certification模块维护）进行比较，以此来判断该事务是否有冲突。</p>
+<blockquote>
+<p>其实，write_set中的元素是如下字符串的一个hash：<br>PRIMARY/db1/3/t1/2/1/1<br>字符串代标识“db1.t1这个表中主键为1”这一条记录。<br>同一条记录的字符串表示是一样的，所以hash也是一样的。<br>所以write_set中其实只有存储这么一个hash就可以了，节省带宽、方便比较。</p>
+</blockquote>
+<h5 id="冲突解决策略"><a href="#冲突解决策略" class="headerlink" title="冲突解决策略"></a>冲突解决策略</h5><p>MGR中根据先来者为准，这个顺序是来自于XCOM对所有并发事务的投票后产生的一个total ordered顺序。所有节点看到所有的事务顺序都是一致的，后来的事务如果和前面的事务有冲突，那么后来的这个事务需要回滚。依据这个冲突解决策略，所有的节点都会达成一致的状态。</p>
+<p>下图是一个MGR冲突检测的例子。<br>图中T1、T2同时修改同一行记录，事务执行时的快照版本（dbv）都是1。T1进行certifiy<br>时，dbv=1，cv=1, 所以T1通过了冲突校验，certification模块的版本（cv）由1变为2；当T2进行certify时，由于dbv=1, cv=2，可以判定T2与前面的事务有冲突，需要回滚T2。<br><img src="http://blog-10049763.cos.myqcloud.com/wiznote/b7f4d1b4-8cbb-452c-8feb-422ad1e58ab4.jpg" alt="alt"></p>
+<p>以上就是MGR冲突检测、解决的原理。其实不管是何种方案，能检测发现冲突、根据某种策略解决冲突都是必须的。后面的异步双向复制、Aurora Multi-Master方案也会有各自的冲突检测、解决手段。</p>
+<h3 id="适用场景"><a href="#适用场景" class="headerlink" title="适用场景"></a>适用场景</h3><h5 id="数据强一致？"><a href="#数据强一致？" class="headerlink" title="数据强一致？"></a>数据强一致？</h5><p>答案是：是的，提交的数据不会丢失、错乱。</p>
+<h5 id="写性能线性扩展？"><a href="#写性能线性扩展？" class="headerlink" title="写性能线性扩展？"></a>写性能线性扩展？</h5><p>那么MGR开启Mulit-Master后，写性能会比单Master好一些吗？<br>答案是：no。</p>
+<p>这个也好理解，不管是1个Master还是多个Master，每个节点其实都是要承担100%的写流量（来自client+来自replication），开启多个Mulit-Master对写性能不会有什么好处。性能只会有一点点提升（前提是做好流量切分，避免出现事务冲突）。</p>
+<p>但是，对于OLTP的业务来说，不会只有纯写的workload，所以在这种workload下，Mulit-Master会比Single-Master性能表现好一些，因为分担了一部分读压力。</p>
+<p>具体性能数据请参考：<a href="https://mysqlhighavailability.com/performance-improvements-in-mysql-8-0-replication/" target="_blank" rel="noopener">https://mysqlhighavailability.com/performance-improvements-in-mysql-8-0-replication/</a></p>
+<h5 id="跨region部署？"><a href="#跨region部署？" class="headerlink" title="跨region部署？"></a>跨region部署？</h5><p>那MGR能跨region部署吗？比如说30ms RTT。<br>答案是：不建议。</p>
+<p>MGR节点之间的RTT如果超过10ms，吞吐量会急剧下降(超过50%)，每增加10ms的RTT，性能都会急剧下降。同时，延时也会急剧增加。</p>
+<p>所以如果是超过30ms RTT的网络，不建议使用MGR。</p>
+<p>具体性能数据请参考：<a href="https://mysqlhighavailability.com/performance-improvements-in-mysql-8-0-replication/" target="_blank" rel="noopener">https://mysqlhighavailability.com/performance-improvements-in-mysql-8-0-replication/</a></p>
+<h5 id="适用场景-1"><a href="#适用场景-1" class="headerlink" title="适用场景"></a>适用场景</h5><p>综上所述，MGR Multi-Master做不到写扩展，而且比较适合同城部署。<br>所以如果你希望提升写性能、希望让天南海北的用户就近访问你的数据、希望服务可以忍受region范围爆炸范围，那么MGR Multi-Master目前来看不是很合适的。</p>
+<p>但是如果只需要做到容忍available zone的爆炸范围，那么MGR还是比较合适的，甚至比异步复制更合适。首先是因为MGR在局域网下，性能已经和异步复制相当，在 2ms RTT的网络环境下，吞吐量相比异步复制只损失10%左右，延时约等于1.5 RTT，也即是3ms，这点性能损失对于大部分应用来说都是无法察觉的，但是换来的是数据零丢失、failover非常简单，不需要通过mha那一套繁重的逻辑。</p>
+<h2 id="未完"><a href="#未完" class="headerlink" title="未完"></a>未完</h2><p>后续会继续更新关于“异步双向复制”和Aurora Multi-Master的内容。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/15/phxpaxos_master/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1654,7 +1870,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-count">8</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -1676,7 +1892,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-count">10</span>
                   <span class="site-state-item-name">tags</span>
                 </a>
               </div>
